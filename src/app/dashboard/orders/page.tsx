@@ -197,7 +197,7 @@ export default function OrdersPage() {
                       <div className="text-sm">{order.agent.name}</div>
                     ) : (
                       <Select
-                        onValueChange={(value) =>
+                        onValueChange={(value: any) =>
                           handleAssignAgent(order.id, value)
                         }
                       >
