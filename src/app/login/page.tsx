@@ -1,8 +1,8 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,18 +13,113 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Eye, EyeOff, ShoppingCart } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, ShoppingCart, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Form validation
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const validateForm = () => {
+    if (!email || !password) {
+      setError("Please fill in all fields");
+      return false;
+    }
+    if (!isValidEmail(email)) {
+      setError("Please enter a valid email address");
+      return false;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return false;
+    }
+    return true;
+  };
+
+  // Main login handler
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempt:", { email, password });
+    setError("");
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      router.push("/dashboard");
+
+      // Optional: Show success message
+      // toast.success('Login successful!');
+    } catch (error: any) {
+      console.error("Login error:", error);
+      setError(error.message || "An error occurred during login");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Google OAuth handler
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+
+      // Option 1: Custom Google OAuth
+      window.location.href = "/api/auth/google";
+
+      // Option 2: If using NextAuth.js, uncomment below
+      // import { signIn } from "next-auth/react";
+      // await signIn('google', { callbackUrl: '/dashboard' });
+    } catch (error) {
+      console.error("Google login error:", error);
+      setError("Google login failed. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  // Apple login handler
+  const handleAppleLogin = async () => {
+    try {
+      setIsLoading(true);
+
+      // Option 1: Custom Apple OAuth
+      window.location.href = "/api/auth/apple";
+
+      // Option 2: If using NextAuth.js, uncomment below
+      // import { signIn } from "next-auth/react";
+      // await signIn('apple', { callbackUrl: '/dashboard' });
+    } catch (error) {
+      console.error("Apple login error:", error);
+      setError("Apple login failed. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  // Demo login for testing
+  const handleDemoLogin = async () => {
+    setEmail("admin@freshmarket.com");
+    setPassword("demo123");
+
+    // Auto-submit after a brief delay
+    setTimeout(() => {
+      const form = document.querySelector("form");
+      if (form) {
+        form.dispatchEvent(
+          new Event("submit", { bubbles: true, cancelable: true })
+        );
+      }
+    }, 100);
   };
 
   return (
@@ -44,6 +139,14 @@ export default function LoginPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Error Alert */}
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -53,6 +156,7 @@ export default function LoginPage() {
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
                 required
               />
             </div>
@@ -65,6 +169,7 @@ export default function LoginPage() {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                   required
                 />
                 <Button
@@ -73,6 +178,7 @@ export default function LoginPage() {
                   size="sm"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -93,10 +199,28 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full bg-primary hover:bg-primary/90"
+              disabled={isLoading}
             >
-              Sign in
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign in"
+              )}
             </Button>
           </form>
+
+          {/* Demo Login Button for Testing */}
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleDemoLogin}
+            disabled={isLoading}
+          >
+            🚀 Demo Login (Testing)
+          </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -110,7 +234,12 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-3">
-            <Button variant="outline" className="w-full bg-transparent">
+            <Button
+              variant="outline"
+              className="w-full bg-transparent"
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+            >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -131,7 +260,12 @@ export default function LoginPage() {
               </svg>
               Sign in with Google
             </Button>
-            <Button variant="outline" className="w-full bg-transparent">
+            <Button
+              variant="outline"
+              className="w-full bg-transparent"
+              onClick={handleAppleLogin}
+              disabled={isLoading}
+            >
               <svg
                 className="mr-2 h-4 w-4"
                 fill="currentColor"
@@ -145,6 +279,14 @@ export default function LoginPage() {
               </svg>
               Sign in with Apple
             </Button>
+          </div>
+
+          {/* Sign up link */}
+          <div className="text-center text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <Link href="/register" className="text-primary hover:underline">
+              Sign up
+            </Link>
           </div>
         </CardContent>
       </Card>
