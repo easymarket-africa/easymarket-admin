@@ -9,6 +9,7 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  Package,
 } from "lucide-react";
 
 import {
@@ -33,6 +34,11 @@ const data = {
       title: "Orders",
       url: "/dashboard/orders",
       icon: ShoppingCart,
+    },
+     {
+      title: "Products", 
+      url: "/dashboard/products",
+      icon: Package,
     },
     {
       title: "Agents",
