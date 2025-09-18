@@ -24,8 +24,38 @@ import { Search, Filter, Eye, MessageCircle } from "lucide-react";
 import { OrderDetailsModal } from "@/components/order-details-modal";
 import { WhatsAppShareModal } from "@/components/whatsapp-share-modal";
 
+// Type definitions
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+interface Customer {
+  name: string;
+  phone: string;
+  email: string;
+}
+
+interface Agent {
+  id: string;
+  name: string;
+  status?: string;
+}
+
+interface Order {
+  id: string;
+  customer: Customer;
+  items: OrderItem[];
+  total: number;
+  status: "pending" | "preparing" | "on_the_way" | "delivered";
+  agent: Agent | null;
+  address: string;
+  createdAt: string;
+}
+
 // Mock data
-const orders = [
+const orders: Order[] = [
   {
     id: "ORD-001",
     customer: {
@@ -76,13 +106,13 @@ const orders = [
   },
 ];
 
-const agents = [
+const agents: Agent[] = [
   { id: "AGT-001", name: "Mike Johnson", status: "available" },
   { id: "AGT-002", name: "Sarah Adams", status: "busy" },
   { id: "AGT-003", name: "Peter Brown", status: "available" },
 ];
 
-const getStatusColor = (status: string) => {
+const getStatusColor = (status: Order["status"]) => {
   switch (status) {
     case "pending":
       return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
@@ -98,8 +128,8 @@ const getStatusColor = (status: string) => {
 };
 
 export default function OrdersPage() {
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
-  const [whatsappOrder, setWhatsappOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [whatsappOrder, setWhatsappOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -197,7 +227,7 @@ export default function OrdersPage() {
                       <div className="text-sm">{order.agent.name}</div>
                     ) : (
                       <Select
-                        onValueChange={(value: any) =>
+                        onValueChange={(value: string) =>
                           handleAssignAgent(order.id, value)
                         }
                       >

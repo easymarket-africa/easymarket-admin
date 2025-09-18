@@ -62,9 +62,13 @@ export default function LoginPage() {
 
       // Optional: Show success message
       // toast.success('Login successful!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Login error:", error);
-      setError(error.message || "An error occurred during login");
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An error occurred during login";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -134,7 +138,7 @@ export default function LoginPage() {
               Welcome Back 👋
             </CardTitle>
             <CardDescription className="text-muted-foreground">
-              Welcome Let's dive in your account
+              Welcome Lets dive in your account
             </CardDescription>
           </div>
         </CardHeader>
@@ -283,7 +287,7 @@ export default function LoginPage() {
 
           {/* Sign up link */}
           <div className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            Dont have an account?{" "}
             <Link href="/register" className="text-primary hover:underline">
               Sign up
             </Link>

@@ -12,8 +12,37 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Phone, Copy, MapPin } from "lucide-react";
 
+// Type definitions
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+interface Customer {
+  name: string;
+  phone: string;
+  email: string;
+}
+
+interface Agent {
+  id: string;
+  name: string;
+}
+
+interface Order {
+  id: string;
+  customer: Customer;
+  items: OrderItem[];
+  total: number;
+  status: "pending" | "preparing" | "on_the_way" | "delivered";
+  agent: Agent | null;
+  address: string;
+  createdAt: string;
+}
+
 interface OrderDetailsModalProps {
-  order: any;
+  order: Order;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -25,7 +54,7 @@ export function OrderDetailsModal({
 }: OrderDetailsModalProps) {
   if (!order) return null;
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: Order["status"]) => {
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
@@ -124,7 +153,7 @@ export function OrderDetailsModal({
           <div className="space-y-3">
             <h3 className="font-semibold">Order Items</h3>
             <div className="space-y-2">
-              {order.items.map((item: any, index: number) => (
+              {order.items.map((item: OrderItem, index: number) => (
                 <div
                   key={index}
                   className="flex justify-between items-center py-2 border-b border-border last:border-0"

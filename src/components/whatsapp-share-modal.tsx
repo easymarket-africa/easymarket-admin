@@ -20,8 +20,37 @@ import {
 } from "@/components/ui/select";
 import { MessageCircle, Copy, ExternalLink } from "lucide-react";
 
+// Type definitions
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+interface Customer {
+  name: string;
+  phone: string;
+  email: string;
+}
+
+interface Agent {
+  id: string;
+  name: string;
+}
+
+interface Order {
+  id: string;
+  customer: Customer;
+  items: OrderItem[];
+  total: number;
+  status: "pending" | "preparing" | "on_the_way" | "delivered";
+  agent: Agent | null;
+  address: string;
+  createdAt: string;
+}
+
 interface WhatsAppShareModalProps {
-  order: any;
+  order: Order;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -54,7 +83,7 @@ Phone: ${order.customer.phone}
 📦 Items:
 ${order.items
   .map(
-    (item: any) =>
+    (item: OrderItem) =>
       `• ${item.name} (${item.quantity}x) - ₦${item.price.toLocaleString()}`
   )
   .join("\n")}
@@ -174,7 +203,9 @@ Please confirm receipt and update status accordingly.`;
             <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
               <li>Select the appropriate agent group for this order</li>
               <li>Review and customize the message if needed</li>
-              <li>Click "Open in WhatsApp" to share with the group</li>
+              <li>
+                Click &quot;Open in WhatsApp&quot; to share with the group
+              </li>
               <li>The message will open in WhatsApp Web/App ready to send</li>
             </ol>
           </div>
