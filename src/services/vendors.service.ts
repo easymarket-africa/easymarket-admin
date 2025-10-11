@@ -44,7 +44,7 @@ export class VendorsService {
   }
 
   /**
-   * Get vendor metrics
+   * Get vendor statistics overview
    */
   async getVendorMetrics(): Promise<VendorMetrics> {
     return apiClient.get<VendorMetrics>(`${this.basePath}/metrics`);

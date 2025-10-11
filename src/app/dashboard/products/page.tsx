@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -123,8 +124,14 @@ export default function ProductsPage() {
     try {
       await createProductMutation.mutateAsync(formData);
       setIsAddModalOpen(false);
-    } catch (error) {
-      // Error is handled by the mutation hook
+    } catch (error: any) {
+      // Error is handled by the mutation hook, but we can also handle it here as backup
+      console.error("Product creation error in handler:", error);
+      const errorMessage =
+        error?.message ||
+        error?.response?.data?.message ||
+        "Failed to create product";
+      toast.error(errorMessage);
     }
   };
 
@@ -135,8 +142,14 @@ export default function ProductsPage() {
     try {
       await updateProductMutation.mutateAsync({ id, data: formData });
       setEditingProduct(null);
-    } catch (error) {
-      // Error is handled by the mutation hook
+    } catch (error: any) {
+      // Error is handled by the mutation hook, but we can also handle it here as backup
+      console.error("Product update error in handler:", error);
+      const errorMessage =
+        error?.message ||
+        error?.response?.data?.message ||
+        "Failed to update product";
+      toast.error(errorMessage);
     }
   };
 
@@ -144,8 +157,14 @@ export default function ProductsPage() {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
         await deleteProductMutation.mutateAsync(id);
-      } catch (error) {
-        // Error is handled by the mutation hook
+      } catch (error: any) {
+        // Error is handled by the mutation hook, but we can also handle it here as backup
+        console.error("Product deletion error in handler:", error);
+        const errorMessage =
+          error?.message ||
+          error?.response?.data?.message ||
+          "Failed to delete product";
+        toast.error(errorMessage);
       }
     }
   };
@@ -154,8 +173,14 @@ export default function ProductsPage() {
     try {
       await bulkUploadMutation.mutateAsync(file);
       setIsExcelModalOpen(false);
-    } catch (error) {
-      // Error is handled by the mutation hook
+    } catch (error: any) {
+      // Error is handled by the mutation hook, but we can also handle it here as backup
+      console.error("Product bulk upload error in handler:", error);
+      const errorMessage =
+        error?.message ||
+        error?.response?.data?.message ||
+        "Failed to upload products";
+      toast.error(errorMessage);
     }
   };
 
@@ -189,6 +214,22 @@ export default function ProductsPage() {
     a.click();
     window.URL.revokeObjectURL(url);
   };
+
+  // Show toast notifications for data fetching errors
+  useEffect(() => {
+    if (productsError) {
+      const errorMessage = productsError?.message || "Failed to load products";
+      toast.error(errorMessage);
+    }
+  }, [productsError]);
+
+  useEffect(() => {
+    if (metricsError) {
+      const errorMessage =
+        metricsError?.message || "Failed to load product metrics";
+      toast.error(errorMessage);
+    }
+  }, [metricsError]);
 
   if (productsError) {
     return (
@@ -240,7 +281,7 @@ export default function ProductsPage() {
                 Add Product
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add New Product</DialogTitle>
                 <DialogDescription>

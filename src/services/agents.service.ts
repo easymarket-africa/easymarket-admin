@@ -3,7 +3,8 @@ import {
   AgentDetails,
   AgentFilters,
   AgentMetrics,
-  PaginatedResponse,
+  AgentsResponse,
+  AvailableAgentsResponse,
   CreateAgentRequest,
   UpdateAgentRequest,
 } from "@/types/api";
@@ -14,14 +15,12 @@ import {
  * Following Single Responsibility Principle
  */
 export class AgentsService {
-  private readonly basePath = "/admin/agents";
+  private readonly basePath = "/agents";
 
   /**
    * Get all agents with filtering and pagination
    */
-  async getAgents(
-    filters: AgentFilters = {}
-  ): Promise<PaginatedResponse<AgentDetails>> {
+  async getAgents(filters: AgentFilters = {}): Promise<AgentsResponse> {
     const params = new URLSearchParams();
 
     Object.entries(filters).forEach(([key, value]) => {
@@ -31,9 +30,11 @@ export class AgentsService {
     });
 
     const queryString = params.toString();
-    const url = queryString ? `${this.basePath}?${queryString}` : this.basePath;
+    const url = queryString
+      ? `${this.basePath}/management?${queryString}`
+      : `${this.basePath}/management`;
 
-    return apiClient.get<PaginatedResponse<AgentDetails>>(url);
+    return apiClient.get<AgentsResponse>(url);
   }
 
   /**
@@ -44,7 +45,14 @@ export class AgentsService {
   }
 
   /**
-   * Get agent metrics
+   * Get available agents (public endpoint)
+   */
+  async getAvailableAgents(): Promise<AvailableAgentsResponse> {
+    return apiClient.get<AvailableAgentsResponse>(`${this.basePath}/available`);
+  }
+
+  /**
+   * Get agent statistics overview
    */
   async getAgentMetrics(): Promise<AgentMetrics> {
     return apiClient.get<AgentMetrics>(`${this.basePath}/metrics`);

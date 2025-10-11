@@ -22,7 +22,7 @@ import { toast } from "sonner";
 export function useGeneralSettings() {
   return useQuery({
     queryKey: queryKeys.settings.general(),
-    queryFn: settingsService.getGeneralSettings,
+    queryFn: () => settingsService.getGeneralSettings(),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -47,7 +47,7 @@ export function useUpdateGeneralSettings() {
 export function useNotificationSettings() {
   return useQuery({
     queryKey: queryKeys.settings.notifications(),
-    queryFn: settingsService.getNotificationSettings,
+    queryFn: () => settingsService.getNotificationSettings(),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -75,7 +75,7 @@ export function useUpdateNotificationSettings() {
 export function useSecuritySettings() {
   return useQuery({
     queryKey: queryKeys.settings.security(),
-    queryFn: settingsService.getSecuritySettings,
+    queryFn: () => settingsService.getSecuritySettings(),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -100,7 +100,7 @@ export function useUpdateSecuritySettings() {
 export function useIntegrationSettings() {
   return useQuery({
     queryKey: queryKeys.settings.integrations(),
-    queryFn: settingsService.getIntegrationSettings,
+    queryFn: () => settingsService.getIntegrationSettings(),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -128,7 +128,7 @@ export function useUpdateIntegrationSettings() {
 export function useBillingSettings() {
   return useQuery({
     queryKey: queryKeys.settings.billing(),
-    queryFn: settingsService.getBillingSettings,
+    queryFn: () => settingsService.getBillingSettings(),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -153,7 +153,7 @@ export function useUpdateBillingSettings() {
 export function useBackupSettings() {
   return useQuery({
     queryKey: [...queryKeys.settings.all, "backup"],
-    queryFn: settingsService.getBackupSettings,
+    queryFn: () => settingsService.getBackupSettings(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }

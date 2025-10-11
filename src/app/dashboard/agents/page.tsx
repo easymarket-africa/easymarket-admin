@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,12 @@ const getAvailabilityColor = (isAvailable: boolean) => {
     : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
 };
 
-export default function AgentsPage() {
+const formatRating = (rating: string | number): string => {
+  const numRating = typeof rating === "string" ? parseFloat(rating) : rating;
+  return isNaN(numRating) ? "0.0" : numRating.toFixed(1);
+};
+
+export default function AgentsPageIntegrated() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<any>(null);
@@ -78,7 +84,7 @@ export default function AgentsPage() {
   const updateAgentMutation = useUpdateAgent();
   const deleteAgentMutation = useDeleteAgent();
 
-  const agents = agentsData?.data || [];
+  const agents = agentsData?.agents || [];
   const metrics = metricsData || {
     totalAgents: 0,
     available: 0,
@@ -90,8 +96,14 @@ export default function AgentsPage() {
     try {
       await createAgentMutation.mutateAsync(formData);
       setIsAddModalOpen(false);
-    } catch (error) {
-      // Error is handled by the mutation hook
+    } catch (error: any) {
+      // Error is handled by the mutation hook, but we can also handle it here as backup
+      console.error("Agent creation error in handler:", error);
+      const errorMessage =
+        error?.message ||
+        error?.response?.data?.message ||
+        "Failed to create agent";
+      toast.error(errorMessage);
     }
   };
 
@@ -102,19 +114,80 @@ export default function AgentsPage() {
     try {
       await updateAgentMutation.mutateAsync({ id, data: formData });
       setEditingAgent(null);
-    } catch (error) {
-      // Error is handled by the mutation hook
+    } catch (error: any) {
+      // Error is handled by the mutation hook, but we can also handle it here as backup
+      console.error("Agent update error in handler:", error);
+      const errorMessage =
+        error?.message ||
+        error?.response?.data?.message ||
+        "Failed to update agent";
+      toast.error(errorMessage);
     }
   };
 
   const handleDeleteAgent = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this agent?")) {
+    if (
+      typeof window !== "undefined" &&
+      window.confirm("Are you sure you want to delete this agent?")
+    ) {
       try {
         await deleteAgentMutation.mutateAsync(id);
-      } catch (error) {
-        // Error is handled by the mutation hook
+      } catch (error: any) {
+        // Error is handled by the mutation hook, but we can also handle it here as backup
+        console.error("Agent deletion error in handler:", error);
+        const errorMessage =
+          error?.message ||
+          error?.response?.data?.message ||
+          "Failed to delete agent";
+        toast.error(errorMessage);
       }
     }
+  };
+
+  // Show toast notifications for data fetching errors
+  useEffect(() => {
+    if (agentsError) {
+      const errorMessage = agentsError?.message || "Failed to load agents";
+      toast.error(errorMessage);
+    }
+  }, [agentsError]);
+
+  useEffect(() => {
+    if (metricsError) {
+      const errorMessage =
+        metricsError?.message || "Failed to load agent metrics";
+      toast.error(errorMessage);
+    }
+  }, [metricsError]);
+
+  // Global error handler for unexpected errors
+  useEffect(() => {
+    const handleGlobalError = (event: ErrorEvent) => {
+      console.error("Global error:", event.error);
+      toast.error("An unexpected error occurred. Please try again.");
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error("Unhandled promise rejection:", event.reason);
+      toast.error("An unexpected error occurred. Please try again.");
+    };
+
+    window.addEventListener("error", handleGlobalError);
+    window.addEventListener("unhandledrejection", handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener("error", handleGlobalError);
+      window.removeEventListener(
+        "unhandledrejection",
+        handleUnhandledRejection
+      );
+    };
+  }, []);
+
+  // Test function to verify toast is working
+  const testToast = () => {
+    toast.error("Test error message");
+    toast.success("Test success message");
   };
 
   if (agentsError) {
@@ -158,6 +231,9 @@ export default function AgentsPage() {
             />
           </DialogContent>
         </Dialog>
+        <Button variant="outline" onClick={testToast}>
+          Test Toast
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -239,7 +315,6 @@ export default function AgentsPage() {
                   <TableHead>Contact</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Availability</TableHead>
-                  <TableHead>Vehicle</TableHead>
                   <TableHead>Rating</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -276,17 +351,9 @@ export default function AgentsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <div className="text-sm">{agent.vehicleType}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {agent.vehicleNumber}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
                       <div className="flex items-center">
                         <span className="text-sm font-medium">
-                          {agent.rating.toFixed(1)}
+                          {formatRating(agent.rating)}
                         </span>
                         <span className="text-yellow-400 ml-1">★</span>
                       </div>
@@ -297,6 +364,7 @@ export default function AgentsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() =>
+                            typeof window !== "undefined" &&
                             window.open(`tel:${agent.phoneNumber}`)
                           }
                         >
@@ -370,26 +438,66 @@ function AgentForm({
     fullName: initialData?.fullName || "",
     email: initialData?.email || "",
     phoneNumber: initialData?.phoneNumber || "",
-    password: "",
-    vehicleType: initialData?.vehicleType || "",
-    vehicleNumber: initialData?.vehicleNumber || "",
-    licenseNumber: initialData?.licenseNumber || "",
     maxOrdersPerDay: initialData?.maxOrdersPerDay || 10,
     workingHoursStart: initialData?.workingHours?.start || "08:00",
     workingHoursEnd: initialData?.workingHours?.end || "18:00",
     serviceAreas: initialData?.serviceAreas?.join(", ") || "",
-    isAvailable: initialData?.isAvailable ?? true,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const submitData = {
-      ...formData,
-      serviceAreas: formData.serviceAreas
+
+    // Basic form validation - only required fields
+    if (!formData.fullName.trim()) {
+      toast.error("Full name is required");
+      return;
+    }
+    if (!formData.email.trim()) {
+      toast.error("Email is required");
+      return;
+    }
+    if (!formData.phoneNumber.trim()) {
+      toast.error("Phone number is required");
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // Phone number validation (basic)
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    if (!phoneRegex.test(formData.phoneNumber.replace(/\s/g, ""))) {
+      toast.error("Please enter a valid phone number");
+      return;
+    }
+
+    // Build payload with only provided fields
+    const submitData: CreateAgentRequest = {
+      fullName: formData.fullName,
+      email: formData.email,
+      phoneNumber: formData.phoneNumber,
+    };
+
+    // Add optional fields only if they have values
+    if (formData.maxOrdersPerDay > 0) {
+      submitData.maxOrdersPerDay = formData.maxOrdersPerDay;
+    }
+    if (formData.workingHoursStart && formData.workingHoursEnd) {
+      submitData.workingHours = {
+        start: formData.workingHoursStart,
+        end: formData.workingHoursEnd,
+      };
+    }
+    if (formData.serviceAreas.trim()) {
+      submitData.serviceAreas = formData.serviceAreas
         .split(",")
         .map((area: string) => area.trim())
-        .filter(Boolean),
-    };
+        .filter(Boolean);
+    }
     onSubmit(submitData);
   };
 
@@ -433,56 +541,23 @@ function AgentForm({
             required
           />
         </div>
-        {!initialData && (
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-              required={!initialData}
-            />
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="vehicleType">Vehicle Type</Label>
-          <Input
-            id="vehicleType"
-            value={formData.vehicleType}
-            onChange={(e) =>
-              setFormData({ ...formData, vehicleType: e.target.value })
-            }
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="vehicleNumber">Vehicle Number</Label>
-          <Input
-            id="vehicleNumber"
-            value={formData.vehicleNumber}
-            onChange={(e) =>
-              setFormData({ ...formData, vehicleNumber: e.target.value })
-            }
-            required
-          />
-        </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="licenseNumber">License Number</Label>
+        <Label htmlFor="maxOrdersPerDay">Max Orders Per Day</Label>
         <Input
-          id="licenseNumber"
-          value={formData.licenseNumber}
+          id="maxOrdersPerDay"
+          type="number"
+          min="1"
+          max="50"
+          value={formData.maxOrdersPerDay}
           onChange={(e) =>
-            setFormData({ ...formData, licenseNumber: e.target.value })
+            setFormData({
+              ...formData,
+              maxOrdersPerDay: parseInt(e.target.value) || 0,
+            })
           }
-          required
+          placeholder="e.g., 15"
         />
       </div>
 
@@ -496,7 +571,6 @@ function AgentForm({
             onChange={(e) =>
               setFormData({ ...formData, workingHoursStart: e.target.value })
             }
-            required
           />
         </div>
         <div className="space-y-2">
@@ -508,7 +582,6 @@ function AgentForm({
             onChange={(e) =>
               setFormData({ ...formData, workingHoursEnd: e.target.value })
             }
-            required
           />
         </div>
       </div>
@@ -522,7 +595,6 @@ function AgentForm({
             setFormData({ ...formData, serviceAreas: e.target.value })
           }
           placeholder="Lagos, Victoria Island, Ikoyi"
-          required
         />
       </div>
 

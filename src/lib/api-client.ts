@@ -2,8 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { ApiError } from "@/types/api";
 
 // API Configuration
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const API_TIMEOUT = 30000; // 30 seconds
 
 // Create axios instance
@@ -18,9 +17,9 @@ const axiosInstance: AxiosInstance = axios.create({
 // Request interceptor to add auth token
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const accessToken = localStorage.getItem("access_token");
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
   },
@@ -29,12 +28,14 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
+// Response interceptor for error handling and token refresh
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
     return response;
   },
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
     const apiError: ApiError = {
       message:
         error.response?.data?.message ||
@@ -42,13 +43,49 @@ axiosInstance.interceptors.response.use(
         "An unexpected error occurred",
       code: error.response?.data?.code || error.code,
       details: error.response?.data?.details,
+      requiresVerification: error.response?.data?.requiresVerification,
     };
 
     // Handle specific HTTP status codes
-    if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
-      localStorage.removeItem("auth_token");
-      window.location.href = "/login";
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const refreshToken = localStorage.getItem("refresh_token");
+
+      if (refreshToken) {
+        try {
+          // Import authService dynamically to avoid circular dependency
+          const { authService } = await import("@/services/auth.service");
+          const response = await authService.refreshToken(refreshToken);
+
+          // Update tokens in localStorage
+          localStorage.setItem("access_token", response.accessToken);
+          localStorage.setItem("refresh_token", response.refreshToken);
+
+          // Retry the original request with new token
+          originalRequest.headers.Authorization = `Bearer ${response.accessToken}`;
+          return axiosInstance(originalRequest);
+        } catch (refreshError) {
+          // Refresh failed, clear tokens and redirect to login
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          localStorage.removeItem("admin_data");
+
+          // Only redirect if we're not already on the login page
+          if (window.location.pathname !== "/login") {
+            window.location.href = "/login";
+          }
+        }
+      } else {
+        // No refresh token, clear all auth data and redirect
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("admin_data");
+
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
+      }
     }
 
     return Promise.reject(apiError);
@@ -127,6 +164,29 @@ export class ApiClient {
     return response.data;
   }
 }
+
+// Token management utilities
+export const tokenManager = {
+  setTokens: (accessToken: string, refreshToken: string) => {
+    localStorage.setItem("access_token", accessToken);
+    localStorage.setItem("refresh_token", refreshToken);
+  },
+
+  getAccessToken: () => localStorage.getItem("access_token"),
+  getRefreshToken: () => localStorage.getItem("refresh_token"),
+
+  clearTokens: () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("admin_data");
+  },
+
+  isAuthenticated: () => {
+    const accessToken = localStorage.getItem("access_token");
+    const refreshToken = localStorage.getItem("refresh_token");
+    return !!(accessToken && refreshToken);
+  },
+};
 
 // Export singleton instance
 export const apiClient = new ApiClient();

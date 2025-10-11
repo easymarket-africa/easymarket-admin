@@ -1,69 +1,132 @@
 import { apiClient } from "@/lib/api-client";
-import { LoginRequest, LoginResponse } from "@/types/api";
+import {
+  LoginRequest,
+  LoginResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
+  SessionResponse,
+  ChangePasswordRequest,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
+  VerifyEmailRequest,
+  VerifyEmailResponse,
+  ResendVerificationRequest,
+  ResendVerificationResponse,
+  Admin,
+} from "@/types/api";
 
 /**
  * Authentication Service
- * Handles all authentication-related API calls
+ * Handles all admin authentication-related API calls
  * Following Single Responsibility Principle
  */
 export class AuthService {
   private readonly basePath = "/admin/auth";
 
   /**
-   * Login user with email and password
+   * Admin login with email and password
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     return apiClient.post<LoginResponse>(`${this.basePath}/login`, credentials);
   }
 
   /**
-   * Logout current user
+   * Admin logout - invalidate tokens
    */
-  async logout(): Promise<void> {
-    return apiClient.post<void>(`${this.basePath}/logout`);
+  async logout(): Promise<{ message: string }> {
+    return apiClient.post<{ message: string }>(`${this.basePath}/logout`);
   }
 
   /**
-   * Refresh authentication token
+   * Refresh admin access token using refresh token
    */
-  async refreshToken(): Promise<LoginResponse> {
-    return apiClient.post<LoginResponse>(`${this.basePath}/refresh`);
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    return apiClient.post<RefreshTokenResponse>(`${this.basePath}/refresh`, {
+      refreshToken,
+    });
   }
 
   /**
-   * Get current user profile
+   * Get current admin session information
    */
-  async getCurrentUser(): Promise<LoginResponse["user"]> {
-    return apiClient.get<LoginResponse["user"]>(`${this.basePath}/me`);
+  async getSession(): Promise<SessionResponse> {
+    return apiClient.get<SessionResponse>(`${this.basePath}/session`);
   }
 
   /**
-   * Change user password
+   * Get current admin profile (alias for getSession for backward compatibility)
    */
-  async changePassword(data: {
-    currentPassword: string;
-    newPassword: string;
-    confirmPassword: string;
-  }): Promise<void> {
-    return apiClient.put<void>(`${this.basePath}/change-password`, data);
+  async getCurrentUser(): Promise<Admin> {
+    const session = await this.getSession();
+    return session.admin;
   }
 
   /**
-   * Request password reset
+   * Change admin password
    */
-  async requestPasswordReset(email: string): Promise<void> {
-    return apiClient.post<void>(`${this.basePath}/forgot-password`, { email });
+  async changePassword(
+    data: ChangePasswordRequest
+  ): Promise<{ message: string }> {
+    return apiClient.put<{ message: string }>(
+      `${this.basePath}/change-password`,
+      data
+    );
   }
 
   /**
-   * Reset password with token
+   * Update admin profile information
    */
-  async resetPassword(data: {
-    token: string;
-    newPassword: string;
-    confirmPassword: string;
-  }): Promise<void> {
-    return apiClient.post<void>(`${this.basePath}/reset-password`, data);
+  async updateProfile(
+    data: UpdateProfileRequest
+  ): Promise<UpdateProfileResponse> {
+    return apiClient.put<UpdateProfileResponse>(
+      `${this.basePath}/profile`,
+      data
+    );
+  }
+
+  /**
+   * Request password reset - send reset code to email
+   */
+  async requestPasswordReset(
+    data: ForgotPasswordRequest
+  ): Promise<ForgotPasswordResponse> {
+    return apiClient.post<ForgotPasswordResponse>(
+      "/auth/forgot-password",
+      data
+    );
+  }
+
+  /**
+   * Reset password with code received via email
+   */
+  async resetPassword(
+    data: ResetPasswordRequest
+  ): Promise<ResetPasswordResponse> {
+    return apiClient.post<ResetPasswordResponse>("/auth/reset-password", data);
+  }
+
+  /**
+   * Verify email with code received via email
+   */
+  async verifyEmail(data: VerifyEmailRequest): Promise<VerifyEmailResponse> {
+    return apiClient.post<VerifyEmailResponse>("/auth/verify-email", data);
+  }
+
+  /**
+   * Resend verification email
+   */
+  async resendVerification(
+    data: ResendVerificationRequest
+  ): Promise<ResendVerificationResponse> {
+    return apiClient.post<ResendVerificationResponse>(
+      "/auth/resend-verification",
+      data
+    );
   }
 }
 

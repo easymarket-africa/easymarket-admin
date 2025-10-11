@@ -54,6 +54,11 @@ const getAvailabilityColor = (isAvailable: boolean) => {
     : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
 };
 
+const formatRating = (rating: string | number): string => {
+  const numRating = typeof rating === "string" ? parseFloat(rating) : rating;
+  return isNaN(numRating) ? "0.0" : numRating.toFixed(1);
+};
+
 export default function AgentsPageIntegrated() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -79,7 +84,7 @@ export default function AgentsPageIntegrated() {
   const updateAgentMutation = useUpdateAgent();
   const deleteAgentMutation = useDeleteAgent();
 
-  const agents = agentsData?.data || [];
+  const agents = agentsData?.agents || [];
   const metrics = metricsData || {
     totalAgents: 0,
     available: 0,
@@ -87,9 +92,11 @@ export default function AgentsPageIntegrated() {
     offline: 0,
   };
 
-  const handleCreateAgent = async (formData: CreateAgentRequest) => {
+  const handleCreateAgent = async (
+    formData: CreateAgentRequest | UpdateAgentRequest
+  ) => {
     try {
-      await createAgentMutation.mutateAsync(formData);
+      await createAgentMutation.mutateAsync(formData as CreateAgentRequest);
       setIsAddModalOpen(false);
     } catch (error) {
       // Error is handled by the mutation hook
@@ -109,7 +116,10 @@ export default function AgentsPageIntegrated() {
   };
 
   const handleDeleteAgent = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this agent?")) {
+    if (
+      typeof window !== "undefined" &&
+      window.confirm("Are you sure you want to delete this agent?")
+    ) {
       try {
         await deleteAgentMutation.mutateAsync(id);
       } catch (error) {
@@ -240,7 +250,6 @@ export default function AgentsPageIntegrated() {
                   <TableHead>Contact</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Availability</TableHead>
-                  <TableHead>Vehicle</TableHead>
                   <TableHead>Rating</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -277,17 +286,9 @@ export default function AgentsPageIntegrated() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <div className="text-sm">{agent.vehicleType}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {agent.vehicleNumber}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
                       <div className="flex items-center">
                         <span className="text-sm font-medium">
-                          {agent.rating.toFixed(1)}
+                          {formatRating(agent.rating)}
                         </span>
                         <span className="text-yellow-400 ml-1">★</span>
                       </div>
@@ -298,6 +299,7 @@ export default function AgentsPageIntegrated() {
                           variant="outline"
                           size="sm"
                           onClick={() =>
+                            typeof window !== "undefined" &&
                             window.open(`tel:${agent.phoneNumber}`)
                           }
                         >
@@ -372,9 +374,6 @@ function AgentForm({
     email: initialData?.email || "",
     phoneNumber: initialData?.phoneNumber || "",
     password: "",
-    vehicleType: initialData?.vehicleType || "",
-    vehicleNumber: initialData?.vehicleNumber || "",
-    licenseNumber: initialData?.licenseNumber || "",
     maxOrdersPerDay: initialData?.maxOrdersPerDay || 10,
     workingHoursStart: initialData?.workingHours?.start || "08:00",
     workingHoursEnd: initialData?.workingHours?.end || "18:00",
@@ -384,13 +383,38 @@ function AgentForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const submitData = {
-      ...formData,
-      serviceAreas: formData.serviceAreas
-        .split(",")
-        .map((area) => area.trim())
-        .filter(Boolean),
+
+    // Build payload with only provided fields
+    const submitData: any = {
+      fullName: formData.fullName,
+      email: formData.email,
+      phoneNumber: formData.phoneNumber,
     };
+
+    // Add optional fields only if they have values
+    if (formData.maxOrdersPerDay > 0) {
+      submitData.maxOrdersPerDay = formData.maxOrdersPerDay;
+    }
+    if (formData.workingHoursStart && formData.workingHoursEnd) {
+      // For create requests, use workingHours object
+      if (!initialData) {
+        submitData.workingHours = {
+          start: formData.workingHoursStart,
+          end: formData.workingHoursEnd,
+        };
+      } else {
+        // For update requests, use separate fields
+        submitData.workingHoursStart = formData.workingHoursStart;
+        submitData.workingHoursEnd = formData.workingHoursEnd;
+      }
+    }
+    if (formData.serviceAreas.trim()) {
+      submitData.serviceAreas = formData.serviceAreas
+        .split(",")
+        .map((area: string) => area.trim())
+        .filter(Boolean);
+    }
+
     onSubmit(submitData);
   };
 
@@ -450,40 +474,21 @@ function AgentForm({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="vehicleType">Vehicle Type</Label>
-          <Input
-            id="vehicleType"
-            value={formData.vehicleType}
-            onChange={(e) =>
-              setFormData({ ...formData, vehicleType: e.target.value })
-            }
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="vehicleNumber">Vehicle Number</Label>
-          <Input
-            id="vehicleNumber"
-            value={formData.vehicleNumber}
-            onChange={(e) =>
-              setFormData({ ...formData, vehicleNumber: e.target.value })
-            }
-            required
-          />
-        </div>
-      </div>
-
       <div className="space-y-2">
-        <Label htmlFor="licenseNumber">License Number</Label>
+        <Label htmlFor="maxOrdersPerDay">Max Orders Per Day</Label>
         <Input
-          id="licenseNumber"
-          value={formData.licenseNumber}
+          id="maxOrdersPerDay"
+          type="number"
+          min="1"
+          max="50"
+          value={formData.maxOrdersPerDay}
           onChange={(e) =>
-            setFormData({ ...formData, licenseNumber: e.target.value })
+            setFormData({
+              ...formData,
+              maxOrdersPerDay: parseInt(e.target.value) || 0,
+            })
           }
-          required
+          placeholder="e.g., 15"
         />
       </div>
 

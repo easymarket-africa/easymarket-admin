@@ -44,7 +44,7 @@ export class ProductsService {
   }
 
   /**
-   * Get product metrics
+   * Get product statistics overview
    */
   async getProductMetrics(): Promise<ProductMetrics> {
     return apiClient.get<ProductMetrics>(`${this.basePath}/metrics`);

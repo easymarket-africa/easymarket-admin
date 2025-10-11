@@ -7,6 +7,7 @@ import {
   UpdateOrderStatusRequest,
   AssignAgentRequest,
   CancelOrderRequest,
+  AgentDetails,
 } from "@/types/api";
 
 /**
@@ -32,7 +33,7 @@ export class OrdersService {
     const queryString = params.toString();
     const url = queryString ? `${this.basePath}?${queryString}` : this.basePath;
 
-    return apiClient.get<PaginatedResponse<Order>>(url);
+    return apiClient.get<OrdersResponse>(url);
   }
 
   /**
@@ -55,8 +56,14 @@ export class OrdersService {
   /**
    * Assign agent to order
    */
-  async assignAgent(id: number, data: AssignAgentRequest): Promise<Order> {
-    return apiClient.put<Order>(`${this.basePath}/${id}/assign-agent`, data);
+  async assignAgent(
+    id: number,
+    data: AssignAgentRequest
+  ): Promise<AgentDetails> {
+    return apiClient.put<AgentDetails>(
+      `${this.basePath}/${id}/assign-agent`,
+      data
+    );
   }
 
   /**
@@ -64,6 +71,16 @@ export class OrdersService {
    */
   async cancelOrder(id: number, data: CancelOrderRequest): Promise<Order> {
     return apiClient.post<Order>(`${this.basePath}/${id}/cancel`, data);
+  }
+
+  /**
+   * Update payment status
+   */
+  async updatePaymentStatus(
+    id: number,
+    data: { paymentStatus: string }
+  ): Promise<Order> {
+    return apiClient.put<Order>(`${this.basePath}/${id}/payment-status`, data);
   }
 
   /**

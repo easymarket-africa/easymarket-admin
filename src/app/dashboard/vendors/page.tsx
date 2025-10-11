@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,8 +77,8 @@ export default function VendorsPage() {
   const vendors = vendorsData?.data || [];
   const metrics = metricsData || {
     totalVendors: 0,
-    activeVendors: 0,
-    pendingVendors: 0,
+    active: 0,
+    pending: 0,
     totalProducts: 0,
   };
 
@@ -85,8 +86,14 @@ export default function VendorsPage() {
     try {
       await createVendorMutation.mutateAsync(formData);
       setIsAddModalOpen(false);
-    } catch (error) {
-      // Error is handled by the mutation hook
+    } catch (error: any) {
+      // Error is handled by the mutation hook, but we can also handle it here as backup
+      console.error("Vendor creation error in handler:", error);
+      const errorMessage =
+        error?.message ||
+        error?.response?.data?.message ||
+        "Failed to create vendor";
+      toast.error(errorMessage);
     }
   };
 
@@ -97,8 +104,14 @@ export default function VendorsPage() {
     try {
       await updateVendorMutation.mutateAsync({ id, data: formData });
       setEditingVendor(null);
-    } catch (error) {
-      // Error is handled by the mutation hook
+    } catch (error: any) {
+      // Error is handled by the mutation hook, but we can also handle it here as backup
+      console.error("Vendor update error in handler:", error);
+      const errorMessage =
+        error?.message ||
+        error?.response?.data?.message ||
+        "Failed to update vendor";
+      toast.error(errorMessage);
     }
   };
 
@@ -106,11 +119,33 @@ export default function VendorsPage() {
     if (window.confirm("Are you sure you want to delete this vendor?")) {
       try {
         await deleteVendorMutation.mutateAsync(id);
-      } catch (error) {
-        // Error is handled by the mutation hook
+      } catch (error: any) {
+        // Error is handled by the mutation hook, but we can also handle it here as backup
+        console.error("Vendor deletion error in handler:", error);
+        const errorMessage =
+          error?.message ||
+          error?.response?.data?.message ||
+          "Failed to delete vendor";
+        toast.error(errorMessage);
       }
     }
   };
+
+  // Show toast notifications for data fetching errors
+  useEffect(() => {
+    if (vendorsError) {
+      const errorMessage = vendorsError?.message || "Failed to load vendors";
+      toast.error(errorMessage);
+    }
+  }, [vendorsError]);
+
+  useEffect(() => {
+    if (metricsError) {
+      const errorMessage =
+        metricsError?.message || "Failed to load vendor metrics";
+      toast.error(errorMessage);
+    }
+  }, [metricsError]);
 
   if (vendorsError) {
     return (
@@ -139,7 +174,7 @@ export default function VendorsPage() {
               Add Vendor
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Vendor</DialogTitle>
               <DialogDescription>
@@ -147,7 +182,9 @@ export default function VendorsPage() {
               </DialogDescription>
             </DialogHeader>
             <VendorForm
-              onSubmit={handleCreateVendor}
+              onSubmit={(data) =>
+                handleCreateVendor(data as CreateVendorRequest)
+              }
               isLoading={createVendorMutation.isPending}
               onCancel={() => setIsAddModalOpen(false)}
             />
@@ -182,7 +219,7 @@ export default function VendorsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {metrics.activeVendors}
+                  {metrics.active}
                 </div>
               </CardContent>
             </Card>
@@ -192,7 +229,7 @@ export default function VendorsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-yellow-600">
-                  {metrics.pendingVendors}
+                  {metrics.pending}
                 </div>
               </CardContent>
             </Card>
@@ -247,7 +284,7 @@ export default function VendorsPage() {
                   <TableRow key={vendor.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{vendor.name}</div>
+                        <div className="font-medium">{vendor.businessName}</div>
                         <div className="text-sm text-muted-foreground flex items-center">
                           <MapPin className="h-3 w-3 mr-1" />
                           {vendor.address.split(",")[0]}
@@ -261,7 +298,7 @@ export default function VendorsPage() {
                       <div>
                         <div className="text-sm">{vendor.phoneNumber}</div>
                         <div className="text-sm text-muted-foreground">
-                          {vendor.email}
+                          {vendor.emailAddress}
                         </div>
                       </div>
                     </TableCell>
@@ -322,7 +359,7 @@ export default function VendorsPage() {
           open={!!editingVendor}
           onOpenChange={() => setEditingVendor(null)}
         >
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Vendor</DialogTitle>
               <DialogDescription>Update vendor information</DialogDescription>
@@ -355,10 +392,10 @@ function VendorForm({
   onCancel,
 }: VendorFormProps) {
   const [formData, setFormData] = useState({
-    name: initialData?.name || "",
+    businessName: initialData?.businessName || "",
     category: initialData?.category || "",
     phoneNumber: initialData?.phoneNumber || "",
-    email: initialData?.email || "",
+    emailAddress: initialData?.emailAddress || "",
     address: initialData?.address || "",
     description: initialData?.description || "",
     taxId: initialData?.taxId || "",
@@ -376,8 +413,10 @@ function VendorForm({
         <Label htmlFor="name">Business Name</Label>
         <Input
           id="name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          value={formData.businessName}
+          onChange={(e) =>
+            setFormData({ ...formData, businessName: e.target.value })
+          }
           required
         />
       </div>
@@ -413,9 +452,9 @@ function VendorForm({
           <Input
             id="email"
             type="email"
-            value={formData.email}
+            value={formData.emailAddress}
             onChange={(e) =>
-              setFormData({ ...formData, email: e.target.value })
+              setFormData({ ...formData, emailAddress: e.target.value })
             }
             placeholder="contact@vendor.com"
             required

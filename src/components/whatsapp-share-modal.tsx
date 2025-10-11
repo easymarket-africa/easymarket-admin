@@ -20,34 +20,8 @@ import {
 } from "@/components/ui/select";
 import { MessageCircle, Copy, ExternalLink } from "lucide-react";
 
-// Type definitions
-interface OrderItem {
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-interface Customer {
-  name: string;
-  phone: string;
-  email: string;
-}
-
-interface Agent {
-  id: string;
-  name: string;
-}
-
-interface Order {
-  id: string;
-  customer: Customer;
-  items: OrderItem[];
-  total: number;
-  status: "pending" | "preparing" | "on_the_way" | "delivered";
-  agent: Agent | null;
-  address: string;
-  createdAt: string;
-}
+// Import types from API
+import { Order } from "@/types/api";
 
 interface WhatsAppShareModalProps {
   order: Order;
@@ -76,29 +50,38 @@ export function WhatsAppShareModal({
   // Generate default message
   const defaultMessage = `🚚 NEW ORDER ALERT 🚚
 
-Order ID: ${order.id}
+Order ID: ${order.orderNumber}
 Customer: ${order.customer.name}
-Phone: ${order.customer.phone}
+Phone: ${order.customer.phoneNumber || "Not provided"}
+Email: ${order.customer.email}
 
 📦 Items:
 ${order.items
   .map(
-    (item: OrderItem) =>
-      `• ${item.name} (${item.quantity}x) - ₦${item.price.toLocaleString()}`
+    (item) =>
+      `• ${item.productName} (${item.quantity}x) - ₦${parseFloat(
+        item.unitPrice
+      ).toLocaleString()}`
   )
   .join("\n")}
 
-💰 Total: ₦${order.total.toLocaleString()}
-📍 Address: ${order.address}
+💰 Subtotal: ₦${parseFloat(order.subtotal).toLocaleString()}
+🚚 Delivery Fee: ₦${parseFloat(order.deliveryFee).toLocaleString()}
+💰 Total: ₦${parseFloat(order.total).toLocaleString()}
+📍 Address: ${order.deliveryAddress.street}, ${order.deliveryAddress.city}, ${
+    order.deliveryAddress.state
+  }, ${order.deliveryAddress.country}
 
 Status: ${order.status.replace("_", " ").toUpperCase()}
+Payment: ${order.paymentStatus.toUpperCase()}
 ${
-  order.agent
-    ? `👤 Assigned Agent: ${order.agent.name}`
+  order.assignedAgent
+    ? `👤 Assigned Agent: ${order.assignedAgent.name} (${order.assignedAgent.phoneNumber})`
     : "👤 Agent: Not assigned yet"
 }
 
 ⏰ Order Time: ${new Date(order.createdAt).toLocaleString()}
+${order.notes ? `📝 Notes: ${order.notes}` : ""}
 
 Please confirm receipt and update status accordingly.`;
 
@@ -125,14 +108,15 @@ Please confirm receipt and update status accordingly.`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-green-600" />
             Share Order to WhatsApp Group
           </DialogTitle>
           <DialogDescription>
-            Share order {order.id} details with your delivery agent groups
+            Share order {order.orderNumber} details with your delivery agent
+            groups
           </DialogDescription>
         </DialogHeader>
 

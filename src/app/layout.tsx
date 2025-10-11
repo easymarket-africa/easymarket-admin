@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono";
 import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/query-provider";
+import { Toaster } from "sonner";
 import { Suspense } from "react";
 import "./globals.css";
 
@@ -21,7 +22,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+      <body
+        className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}
+        suppressHydrationWarning
+      >
         <Suspense fallback={null}>
           <QueryProvider>
             <ThemeProvider
@@ -34,6 +38,7 @@ export default function RootLayout({
             </ThemeProvider>
           </QueryProvider>
         </Suspense>
+        <Toaster position="top-right" richColors />
         <Analytics />
       </body>
     </html>

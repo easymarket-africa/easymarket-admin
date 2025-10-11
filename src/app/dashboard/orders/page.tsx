@@ -20,11 +20,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Filter, Eye, MessageCircle } from "lucide-react";
+import {
+  Search,
+  Filter,
+  Eye,
+  MessageCircle,
+  CheckSquare,
+  Square,
+} from "lucide-react";
 import { OrderDetailsModal } from "@/components/order-details-modal";
 import { WhatsAppShareModal } from "@/components/whatsapp-share-modal";
-import { useOrders, useAssignAgent } from "@/hooks/use-orders";
-import { useAgents } from "@/hooks/use-agents";
+import {
+  useOrders,
+  useAssignAgent,
+  useUpdateOrderStatus,
+  useUpdatePaymentStatus,
+} from "@/hooks/use-orders";
+import { useAvailableAgents } from "@/hooks/use-agents";
 import { TableSkeleton } from "@/components/loading-states";
 import { ErrorDisplay, ErrorAlert } from "@/components/error-display";
 import { Order } from "@/types/api";
@@ -55,6 +67,8 @@ export default function OrdersPage() {
   const [whatsappOrder, setWhatsappOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedOrders, setSelectedOrders] = useState<Set<number>>(new Set());
+  const [showBulkActions, setShowBulkActions] = useState(false);
 
   // API hooks
   const {
@@ -67,21 +81,66 @@ export default function OrdersPage() {
     status: statusFilter === "all" ? undefined : statusFilter,
   });
 
-  const { data: agentsData } = useAgents({ status: "active" });
+  const { data: agentsData } = useAvailableAgents();
   const assignAgentMutation = useAssignAgent();
+  const updateStatusMutation = useUpdateOrderStatus();
+  const updatePaymentStatusMutation = useUpdatePaymentStatus();
 
   const orders = (ordersData as any)?.orders || [];
-  const agents = agentsData?.data || [];
+  const agents = Array.isArray(agentsData?.agents) ? agentsData.agents : [];
 
   const handleAssignAgent = async (orderId: number, agentId: number) => {
     try {
       await assignAgentMutation.mutateAsync({
         id: orderId,
-        data: { agentId },
+        data: { agentId: agentId },
       });
     } catch (error) {
       // Error is handled by the mutation hook
     }
+  };
+
+  const handleSelectOrder = (orderId: number) => {
+    const newSelected = new Set(selectedOrders);
+    if (newSelected.has(orderId)) {
+      newSelected.delete(orderId);
+    } else {
+      newSelected.add(orderId);
+    }
+    setSelectedOrders(newSelected);
+    setShowBulkActions(newSelected.size > 0);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedOrders.size === orders.length) {
+      setSelectedOrders(new Set());
+      setShowBulkActions(false);
+    } else {
+      setSelectedOrders(new Set(orders.map((order: Order) => order.id)));
+      setShowBulkActions(true);
+    }
+  };
+
+  const handleBulkStatusUpdate = (status: string) => {
+    selectedOrders.forEach((orderId) => {
+      updateStatusMutation.mutate({
+        id: orderId,
+        data: { status },
+      });
+    });
+    setSelectedOrders(new Set());
+    setShowBulkActions(false);
+  };
+
+  const handleBulkPaymentStatusUpdate = (paymentStatus: string) => {
+    selectedOrders.forEach((orderId) => {
+      updatePaymentStatusMutation.mutate({
+        id: orderId,
+        data: { paymentStatus },
+      });
+    });
+    setSelectedOrders(new Set());
+    setShowBulkActions(false);
   };
 
   if (ordersError) {
@@ -105,6 +164,61 @@ export default function OrdersPage() {
           </p>
         </div>
       </div>
+
+      {/* Bulk Actions */}
+      {showBulkActions && (
+        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">
+                  {selectedOrders.size} order
+                  {selectedOrders.size > 1 ? "s" : ""} selected
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select onValueChange={handleBulkStatusUpdate}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Update Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="confirmed">Confirm</SelectItem>
+                    <SelectItem value="preparing">Preparing</SelectItem>
+                    <SelectItem value="ready_for_delivery">
+                      Ready for Delivery
+                    </SelectItem>
+                    <SelectItem value="on_the_way">On the Way</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select onValueChange={handleBulkPaymentStatusUpdate}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Update Payment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="paid">Mark as Paid</SelectItem>
+                    <SelectItem value="successful">
+                      Mark as Successful
+                    </SelectItem>
+                    <SelectItem value="failed">Mark as Failed</SelectItem>
+                    <SelectItem value="refunded">Mark as Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedOrders(new Set());
+                    setShowBulkActions(false);
+                  }}
+                >
+                  Clear Selection
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -145,18 +259,47 @@ export default function OrdersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSelectAll}
+                      className="h-8 w-8 p-0"
+                    >
+                      {selectedOrders.size === orders.length ? (
+                        <CheckSquare className="h-4 w-4" />
+                      ) : (
+                        <Square className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TableHead>
                   <TableHead>Order ID</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Payment</TableHead>
                   <TableHead>Agent</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map((order: any) => (
+                {orders.map((order: Order) => (
                   <TableRow key={order.id}>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSelectOrder(order.id)}
+                        className="h-8 w-8 p-0"
+                      >
+                        {selectedOrders.has(order.id) ? (
+                          <CheckSquare className="h-4 w-4" />
+                        ) : (
+                          <Square className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TableCell>
                     <TableCell className="font-medium">
                       {order.orderNumber}
                     </TableCell>
@@ -178,9 +321,54 @@ export default function OrdersPage() {
                       ₦{parseFloat(order.total).toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(order.status)}>
-                        {order.status.replace("_", " ")}
-                      </Badge>
+                      <Select
+                        value={order.status}
+                        onValueChange={(value: string) =>
+                          updateStatusMutation.mutate({
+                            id: order.id,
+                            data: { status: value },
+                          })
+                        }
+                        disabled={updateStatusMutation.isPending}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                          <SelectItem value="preparing">Preparing</SelectItem>
+                          <SelectItem value="ready_for_delivery">
+                            Ready for Delivery
+                          </SelectItem>
+                          <SelectItem value="on_the_way">On the Way</SelectItem>
+                          <SelectItem value="delivered">Delivered</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={order.paymentStatus}
+                        onValueChange={(value: string) =>
+                          updatePaymentStatusMutation.mutate({
+                            id: order.id,
+                            data: { paymentStatus: value },
+                          })
+                        }
+                        disabled={updatePaymentStatusMutation.isPending}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="paid">Paid</SelectItem>
+                          <SelectItem value="successful">Successful</SelectItem>
+                          <SelectItem value="failed">Failed</SelectItem>
+                          <SelectItem value="refunded">Refunded</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell>
                       {order.assignedAgent ? (
@@ -241,7 +429,7 @@ export default function OrdersPage() {
 
       {selectedOrder && (
         <OrderDetailsModal
-          order={selectedOrder as any}
+          order={selectedOrder}
           open={!!selectedOrder}
           onOpenChange={() => setSelectedOrder(null)}
         />
@@ -249,7 +437,7 @@ export default function OrdersPage() {
 
       {whatsappOrder && (
         <WhatsAppShareModal
-          order={whatsappOrder as any}
+          order={whatsappOrder}
           open={!!whatsappOrder}
           onOpenChange={() => setWhatsappOrder(null)}
         />

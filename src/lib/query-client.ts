@@ -41,6 +41,7 @@ export const queryKeys = {
   // Authentication
   auth: {
     user: ["auth", "user"] as const,
+    session: ["auth", "session"] as const,
   },
 
   // Orders

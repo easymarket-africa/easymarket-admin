@@ -9,6 +9,7 @@ import {
   UpdateOrderStatusRequest,
   AssignAgentRequest,
   CancelOrderRequest,
+  AgentDetails,
 } from "@/types/api";
 import { toast } from "sonner";
 
@@ -96,14 +97,8 @@ export function useAssignAgent() {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: AssignAgentRequest }) =>
       ordersService.assignAgent(id, data),
-    onSuccess: (updatedOrder: Order) => {
-      // Update the specific order in cache
-      queryClient.setQueryData(
-        queryKeys.orders.detail(updatedOrder.id),
-        updatedOrder
-      );
-
-      // Invalidate orders list to refresh
+    onSuccess: (assignedAgent: AgentDetails) => {
+      // Invalidate orders list to refresh (order will show assigned agent)
       queryClient.invalidateQueries({
         queryKey: queryKeys.orders.lists(),
       });
@@ -113,7 +108,12 @@ export function useAssignAgent() {
         queryKey: queryKeys.agents.lists(),
       });
 
-      toast.success("Agent assigned successfully");
+      // Invalidate available agents to refresh availability
+      queryClient.invalidateQueries({
+        queryKey: [...queryKeys.agents.lists(), "available"],
+      });
+
+      toast.success(`Agent ${assignedAgent.fullName} assigned successfully`);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to assign agent");
@@ -146,6 +146,40 @@ export function useCancelOrder() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to cancel order");
+    },
+  });
+}
+
+/**
+ * Hook for updating payment status
+ */
+export function useUpdatePaymentStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: { paymentStatus: string };
+    }) => ordersService.updatePaymentStatus(id, data),
+    onSuccess: (updatedOrder: Order) => {
+      // Update the specific order in cache
+      queryClient.setQueryData(
+        queryKeys.orders.detail(updatedOrder.id),
+        updatedOrder
+      );
+
+      // Invalidate orders list to refresh
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.orders.lists(),
+      });
+
+      toast.success("Payment status updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update payment status");
     },
   });
 }

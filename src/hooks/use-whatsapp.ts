@@ -23,7 +23,7 @@ import { toast } from "sonner";
 export function useWhatsAppGroups() {
   return useQuery({
     queryKey: queryKeys.whatsapp.groups(),
-    queryFn: whatsappService.getGroups,
+    queryFn: () => whatsappService.getGroups(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }

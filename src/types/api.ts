@@ -22,6 +22,21 @@ export interface OrdersResponse {
   totalPages: number;
 }
 
+// Agents specific response (since it uses 'agents' instead of 'data')
+export interface AgentsResponse {
+  agents: AgentDetails[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// Available agents response (different format from management endpoint)
+export interface AvailableAgentsResponse {
+  agents: AgentDetails[];
+  totalAvailable: number;
+}
+
 // Products specific response (since it uses 'products' instead of 'data')
 export interface ProductsResponse {
   products: Product[];
@@ -35,6 +50,7 @@ export interface ApiError {
   message: string;
   code?: string;
   details?: Record<string, any>;
+  requiresVerification?: boolean;
 }
 
 // Authentication Types
@@ -43,15 +59,101 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface Admin {
+  id: number;
+  email: string;
+  fullName: string;
+  role: "admin" | "super_admin";
+  status: "active" | "inactive" | "suspended";
+  isEmailVerified: boolean;
+  lastLoginAt: string;
+}
+
+export interface SessionInfo {
+  ipAddress: string;
+  userAgent: string;
+  loginTime: string;
+  isActive: boolean;
+}
+
 export interface LoginResponse {
-  token: string;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-  };
-  expiresIn: number;
+  accessToken: string;
+  refreshToken: string;
+  admin: Admin;
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface SessionResponse {
+  admin: Admin;
+  session: SessionInfo;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface UpdateProfileRequest {
+  fullName?: string;
+  email?: string;
+}
+
+export interface UpdateProfileResponse {
+  message: string;
+  admin: Admin;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  code: string;
+  newPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
+}
+
+export interface VerifyEmailResponse {
+  accessToken: string;
+  refreshToken: string;
+  admin: Admin;
+}
+
+export interface ResendVerificationRequest {
+  email: string;
+}
+
+export interface ResendVerificationResponse {
+  message: string;
+}
+
+// Legacy support - keeping for backward compatibility
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
 }
 
 // Order Types
@@ -128,7 +230,6 @@ export interface UpdateOrderStatusRequest {
 
 export interface AssignAgentRequest {
   agentId: number;
-  notes?: string;
 }
 
 export interface CancelOrderRequest {
@@ -228,10 +329,7 @@ export interface AgentDetails {
   status: "active" | "inactive" | "suspended";
   isAvailable: boolean;
   currentOrderId?: number;
-  vehicleType: string;
-  vehicleNumber: string;
-  licenseNumber: string;
-  rating: number;
+  rating: string;
   totalDeliveries: number;
   completedDeliveries: number;
   cancelledDeliveries: number;
@@ -265,24 +363,18 @@ export interface CreateAgentRequest {
   fullName: string;
   email: string;
   phoneNumber: string;
-  password: string;
-  vehicleType: string;
-  vehicleNumber: string;
-  licenseNumber: string;
-  maxOrdersPerDay: number;
-  workingHoursStart: string;
-  workingHoursEnd: string;
-  serviceAreas: string[];
-  isAvailable: boolean;
+  maxOrdersPerDay?: number;
+  workingHours?: {
+    start: string;
+    end: string;
+  };
+  serviceAreas?: string[];
 }
 
 export interface UpdateAgentRequest {
   fullName?: string;
   email?: string;
   phoneNumber?: string;
-  vehicleType?: string;
-  vehicleNumber?: string;
-  licenseNumber?: string;
   maxOrdersPerDay?: number;
   workingHoursStart?: string;
   workingHoursEnd?: string;
