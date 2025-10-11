@@ -22,6 +22,15 @@ export interface OrdersResponse {
   totalPages: number;
 }
 
+// Products specific response (since it uses 'products' instead of 'data')
+export interface ProductsResponse {
+  products: Product[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export interface ApiError {
   message: string;
   code?: string;
@@ -138,17 +147,17 @@ export interface Product {
   name: string;
   description: string;
   category: string;
-  price: number;
+  price: string;
   unit: string;
   stockQuantity: number;
   imageUrl: string;
   sku: string;
-  weight: number;
+  weight: number | null;
   dimensions: string;
   tags: string[];
   isFeatured: boolean;
   isActive: boolean;
-  vendor: Vendor;
+  vendor?: Vendor;
   createdAt: string;
   updatedAt: string;
 }

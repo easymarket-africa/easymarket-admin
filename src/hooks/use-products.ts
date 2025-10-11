@@ -46,7 +46,7 @@ export function useProduct(id: number) {
 export function useProductMetrics() {
   return useQuery({
     queryKey: queryKeys.products.metrics(),
-    queryFn: productsService.getProductMetrics,
+    queryFn: () => productsService.getProductMetrics(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
@@ -57,7 +57,7 @@ export function useProductMetrics() {
 export function useProductCategories() {
   return useQuery({
     queryKey: [...queryKeys.products.all, "categories"],
-    queryFn: productsService.getCategories,
+    queryFn: () => productsService.getCategories(),
     staleTime: 30 * 60 * 1000, // 30 minutes
   });
 }

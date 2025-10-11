@@ -109,7 +109,7 @@ export default function ProductsPage() {
   const deleteProductMutation = useDeleteProduct();
   const bulkUploadMutation = useBulkUploadProducts();
 
-  const products = productsData?.data || [];
+  const products = (productsData as any)?.products || [];
   const metrics = metricsData || {
     totalProducts: 0,
     activeProducts: 0,
@@ -250,7 +250,9 @@ export default function ProductsPage() {
               <ProductForm
                 categories={categories}
                 vendors={vendors}
-                onSubmit={handleCreateProduct}
+                onSubmit={(data) =>
+                  handleCreateProduct(data as CreateProductRequest)
+                }
                 isLoading={createProductMutation.isPending}
                 onCancel={() => setIsAddModalOpen(false)}
               />
@@ -367,7 +369,7 @@ export default function ProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.map((product) => (
+                {products.map((product: any) => (
                   <TableRow key={product.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -377,6 +379,10 @@ export default function ProductsPage() {
                           width={40}
                           height={40}
                           className="rounded-md object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = defaultProductImage;
+                          }}
                         />
                         <div>
                           <div className="font-medium">{product.name}</div>
@@ -394,7 +400,7 @@ export default function ProductsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">
-                        ₦{product.price.toLocaleString()}
+                        ₦{parseFloat(product.price).toLocaleString()}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         per {product.unit}
@@ -494,7 +500,7 @@ function ProductForm({
     name: initialData?.name || "",
     description: initialData?.description || "",
     category: initialData?.category || "",
-    price: initialData?.price || 0,
+    price: initialData?.price || "0",
     unit: initialData?.unit || "",
     stockQuantity: initialData?.stockQuantity || 0,
     sku: initialData?.sku || "",
@@ -503,13 +509,14 @@ function ProductForm({
     tags: initialData?.tags?.join(", ") || "",
     isFeatured: initialData?.isFeatured || false,
     isActive: initialData?.isActive ?? true,
-    vendorId: initialData?.vendorId || 0,
+    vendorId: initialData?.vendor?.id || 0,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const submitData = {
       ...formData,
+      price: parseFloat(formData.price),
       tags: formData.tags
         .split(",")
         .map((tag) => tag.trim())
@@ -593,7 +600,7 @@ function ProductForm({
             type="number"
             value={formData.price}
             onChange={(e) =>
-              setFormData({ ...formData, price: parseFloat(e.target.value) })
+              setFormData({ ...formData, price: e.target.value })
             }
             required
           />

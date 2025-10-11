@@ -4,6 +4,7 @@ import {
   ProductFilters,
   ProductMetrics,
   PaginatedResponse,
+  ProductsResponse,
   CreateProductRequest,
   UpdateProductRequest,
   BulkUploadResponse,
@@ -20,9 +21,7 @@ export class ProductsService {
   /**
    * Get all products with filtering and pagination
    */
-  async getProducts(
-    filters: ProductFilters = {}
-  ): Promise<PaginatedResponse<Product>> {
+  async getProducts(filters: ProductFilters = {}): Promise<ProductsResponse> {
     const params = new URLSearchParams();
 
     Object.entries(filters).forEach(([key, value]) => {
@@ -34,7 +33,7 @@ export class ProductsService {
     const queryString = params.toString();
     const url = queryString ? `${this.basePath}?${queryString}` : this.basePath;
 
-    return apiClient.get<PaginatedResponse<Product>>(url);
+    return apiClient.get<ProductsResponse>(url);
   }
 
   /**
