@@ -33,6 +33,7 @@ import {
 import { TableSkeleton, StatsCardSkeleton } from "@/components/loading-states";
 import { ErrorDisplay, ErrorAlert } from "@/components/error-display";
 import { CreateAgentRequest, UpdateAgentRequest } from "@/types/api";
+import { toast } from "sonner";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -53,7 +54,7 @@ const getAvailabilityColor = (isAvailable: boolean) => {
     : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
 };
 
-export default function AgentsPage() {
+export default function AgentsPageIntegrated() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<any>(null);
@@ -152,7 +153,7 @@ export default function AgentsPage() {
               </DialogDescription>
             </DialogHeader>
             <AgentForm
-              onSubmit={(data) => handleCreateAgent(data as CreateAgentRequest)}
+              onSubmit={handleCreateAgent}
               isLoading={createAgentMutation.isPending}
               onCancel={() => setIsAddModalOpen(false)}
             />
@@ -387,7 +388,7 @@ function AgentForm({
       ...formData,
       serviceAreas: formData.serviceAreas
         .split(",")
-        .map((area: string) => area.trim())
+        .map((area) => area.trim())
         .filter(Boolean),
     };
     onSubmit(submitData);

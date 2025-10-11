@@ -24,62 +24,16 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Plus, Phone, Edit, Trash2, Store, MapPin } from "lucide-react";
-
-// Mock data
-const vendors = [
-  {
-    id: "VND-001",
-    name: "Fresh Farms Market",
-    category: "Grocery",
-    phone: "+234 801 234 5678",
-    email: "contact@freshfarms.com",
-    address: "123 Market Street, Victoria Island, Lagos",
-    status: "active",
-    products: 45,
-    totalOrders: 234,
-    rating: 4.8,
-    joinedAt: "2023-11-15",
-  },
-  {
-    id: "VND-002",
-    name: "Organic Delights",
-    category: "Organic Foods",
-    phone: "+234 802 345 6789",
-    email: "info@organicdelights.com",
-    address: "456 Green Avenue, Ikoyi, Lagos",
-    status: "active",
-    products: 32,
-    totalOrders: 189,
-    rating: 4.9,
-    joinedAt: "2023-12-01",
-  },
-  {
-    id: "VND-003",
-    name: "Spice World",
-    category: "Spices & Herbs",
-    phone: "+234 803 456 7890",
-    email: "orders@spiceworld.com",
-    address: "789 Spice Lane, Surulere, Lagos",
-    status: "pending",
-    products: 28,
-    totalOrders: 156,
-    rating: 4.6,
-    joinedAt: "2024-01-10",
-  },
-  {
-    id: "VND-004",
-    name: "Meat Masters",
-    category: "Meat & Poultry",
-    phone: "+234 804 567 8901",
-    email: "sales@meatmasters.com",
-    address: "321 Butcher Street, Ikeja, Lagos",
-    status: "suspended",
-    products: 18,
-    totalOrders: 98,
-    rating: 4.3,
-    joinedAt: "2023-10-20",
-  },
-];
+import {
+  useVendors,
+  useVendorMetrics,
+  useCreateVendor,
+  useUpdateVendor,
+  useDeleteVendor,
+} from "@/hooks/use-vendors";
+import { TableSkeleton, StatsCardSkeleton } from "@/components/loading-states";
+import { ErrorDisplay, ErrorAlert } from "@/components/error-display";
+import { CreateVendorRequest, UpdateVendorRequest } from "@/types/api";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -97,14 +51,77 @@ const getStatusColor = (status: string) => {
 export default function VendorsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingVendor, setEditingVendor] = useState<any>(null);
 
-  const filteredVendors = vendors.filter(
-    (vendor) =>
-      vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vendor.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vendor.phone.includes(searchTerm) ||
-      vendor.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // API hooks
+  const {
+    data: vendorsData,
+    isLoading: vendorsLoading,
+    error: vendorsError,
+    refetch: refetchVendors,
+  } = useVendors({
+    search: searchTerm || undefined,
+  });
+
+  const {
+    data: metricsData,
+    isLoading: metricsLoading,
+    error: metricsError,
+  } = useVendorMetrics();
+
+  const createVendorMutation = useCreateVendor();
+  const updateVendorMutation = useUpdateVendor();
+  const deleteVendorMutation = useDeleteVendor();
+
+  const vendors = vendorsData?.data || [];
+  const metrics = metricsData || {
+    totalVendors: 0,
+    activeVendors: 0,
+    pendingVendors: 0,
+    totalProducts: 0,
+  };
+
+  const handleCreateVendor = async (formData: CreateVendorRequest) => {
+    try {
+      await createVendorMutation.mutateAsync(formData);
+      setIsAddModalOpen(false);
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
+  };
+
+  const handleUpdateVendor = async (
+    id: number,
+    formData: UpdateVendorRequest
+  ) => {
+    try {
+      await updateVendorMutation.mutateAsync({ id, data: formData });
+      setEditingVendor(null);
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
+  };
+
+  const handleDeleteVendor = async (id: number) => {
+    if (window.confirm("Are you sure you want to delete this vendor?")) {
+      try {
+        await deleteVendorMutation.mutateAsync(id);
+      } catch (error) {
+        // Error is handled by the mutation hook
+      }
+    }
+  };
+
+  if (vendorsError) {
+    return (
+      <ErrorDisplay
+        error={vendorsError}
+        onRetry={() => refetchVendors()}
+        title="Failed to load vendors"
+        description="There was an error loading the vendors data. Please try again."
+      />
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
@@ -129,96 +146,70 @@ export default function VendorsPage() {
                 Register a new vendor partner
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="vendor-name">Business Name</Label>
-                <Input id="vendor-name" placeholder="Enter business name" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="vendor-category">Category</Label>
-                <Input
-                  id="vendor-category"
-                  placeholder="e.g., Grocery, Organic Foods"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="vendor-phone">Phone Number</Label>
-                <Input id="vendor-phone" placeholder="+234 xxx xxx xxxx" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="vendor-email">Email Address</Label>
-                <Input
-                  id="vendor-email"
-                  type="email"
-                  placeholder="contact@vendor.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="vendor-address">Address</Label>
-                <Textarea
-                  id="vendor-address"
-                  placeholder="Enter full business address"
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsAddModalOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={() => setIsAddModalOpen(false)}>
-                  Add Vendor
-                </Button>
-              </div>
-            </div>
+            <VendorForm
+              onSubmit={handleCreateVendor}
+              isLoading={createVendorMutation.isPending}
+              onCancel={() => setIsAddModalOpen(false)}
+            />
           </DialogContent>
         </Dialog>
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Vendors</CardTitle>
-            <Store className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{vendors.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {vendors.filter((v) => v.status === "active").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {vendors.filter((v) => v.status === "pending").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Products
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {vendors.reduce((sum, v) => sum + v.products, 0)}
-            </div>
-          </CardContent>
-        </Card>
+        {metricsLoading ? (
+          Array.from({ length: 4 }).map((_, i) => <StatsCardSkeleton key={i} />)
+        ) : metricsError ? (
+          <div className="col-span-4">
+            <ErrorAlert error={metricsError} />
+          </div>
+        ) : (
+          <>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Vendors
+                </CardTitle>
+                <Store className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics.totalVendors}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {metrics.activeVendors}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">
+                  {metrics.pendingVendors}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Products
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {metrics.totalProducts}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       <Card>
@@ -236,84 +227,264 @@ export default function VendorsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Vendor</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Products</TableHead>
-                <TableHead>Orders</TableHead>
-                <TableHead>Rating</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredVendors.map((vendor) => (
-                <TableRow key={vendor.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{vendor.name}</div>
-                      <div className="text-sm text-muted-foreground flex items-center">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {vendor.address.split(",")[0]}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{vendor.category}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="text-sm">{vendor.phone}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {vendor.email}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(vendor.status)}>
-                      {vendor.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{vendor.products}</TableCell>
-                  <TableCell>{vendor.totalOrders}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium">
-                        {vendor.rating}
-                      </span>
-                      <span className="text-yellow-400 ml-1">★</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(`tel:${vendor.phone}`)}
-                      >
-                        <Phone className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive bg-transparent"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {vendorsLoading ? (
+            <TableSkeleton />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Products</TableHead>
+                  <TableHead>Rating</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {vendors.map((vendor) => (
+                  <TableRow key={vendor.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{vendor.name}</div>
+                        <div className="text-sm text-muted-foreground flex items-center">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {vendor.address.split(",")[0]}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{vendor.category}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="text-sm">{vendor.phoneNumber}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {vendor.email}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(vendor.status)}>
+                        {vendor.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{vendor.productsCount}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium">
+                          {vendor.rating.toFixed(1)}
+                        </span>
+                        <span className="text-yellow-400 ml-1">★</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            window.open(`tel:${vendor.phoneNumber}`)
+                          }
+                        >
+                          <Phone className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingVendor(vendor)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive bg-transparent"
+                          onClick={() => handleDeleteVendor(vendor.id)}
+                          disabled={deleteVendorMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
+
+      {/* Edit Vendor Dialog */}
+      {editingVendor && (
+        <Dialog
+          open={!!editingVendor}
+          onOpenChange={() => setEditingVendor(null)}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Vendor</DialogTitle>
+              <DialogDescription>Update vendor information</DialogDescription>
+            </DialogHeader>
+            <VendorForm
+              initialData={editingVendor}
+              onSubmit={(data) => handleUpdateVendor(editingVendor.id, data)}
+              isLoading={updateVendorMutation.isPending}
+              onCancel={() => setEditingVendor(null)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
+  );
+}
+
+// Vendor Form Component
+interface VendorFormProps {
+  initialData?: any;
+  onSubmit: (data: CreateVendorRequest | UpdateVendorRequest) => void;
+  isLoading: boolean;
+  onCancel: () => void;
+}
+
+function VendorForm({
+  initialData,
+  onSubmit,
+  isLoading,
+  onCancel,
+}: VendorFormProps) {
+  const [formData, setFormData] = useState({
+    name: initialData?.name || "",
+    category: initialData?.category || "",
+    phoneNumber: initialData?.phoneNumber || "",
+    email: initialData?.email || "",
+    address: initialData?.address || "",
+    description: initialData?.description || "",
+    taxId: initialData?.taxId || "",
+    bankAccount: initialData?.bankAccount || "",
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">Business Name</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="category">Category</Label>
+        <Input
+          id="category"
+          value={formData.category}
+          onChange={(e) =>
+            setFormData({ ...formData, category: e.target.value })
+          }
+          placeholder="e.g., Grocery, Organic Foods"
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="phoneNumber">Phone Number</Label>
+          <Input
+            id="phoneNumber"
+            value={formData.phoneNumber}
+            onChange={(e) =>
+              setFormData({ ...formData, phoneNumber: e.target.value })
+            }
+            placeholder="+234 xxx xxx xxxx"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">Email Address</Label>
+          <Input
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
+            placeholder="contact@vendor.com"
+            required
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="address">Address</Label>
+        <Textarea
+          id="address"
+          value={formData.address}
+          onChange={(e) =>
+            setFormData({ ...formData, address: e.target.value })
+          }
+          placeholder="Enter full business address"
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
+          placeholder="Brief description of the business"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="taxId">Tax ID</Label>
+          <Input
+            id="taxId"
+            value={formData.taxId}
+            onChange={(e) =>
+              setFormData({ ...formData, taxId: e.target.value })
+            }
+            placeholder="Tax identification number"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="bankAccount">Bank Account</Label>
+          <Input
+            id="bankAccount"
+            value={formData.bankAccount}
+            onChange={(e) =>
+              setFormData({ ...formData, bankAccount: e.target.value })
+            }
+            placeholder="Bank account number"
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading
+            ? "Saving..."
+            : initialData
+            ? "Update Vendor"
+            : "Add Vendor"}
+        </Button>
+      </div>
+    </form>
   );
 }

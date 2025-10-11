@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image"; // Add this import
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,85 +43,26 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
+import {
+  useProducts,
+  useProductMetrics,
+  useCreateProduct,
+  useUpdateProduct,
+  useDeleteProduct,
+  useBulkUploadProducts,
+  useProductCategories,
+} from "@/hooks/use-products";
+import { useVendors } from "@/hooks/use-vendors";
+import { TableSkeleton, StatsCardSkeleton } from "@/components/loading-states";
+import { ErrorDisplay, ErrorAlert } from "@/components/error-display";
+import {
+  Product,
+  CreateProductRequest,
+  UpdateProductRequest,
+} from "@/types/api";
 
-// Import images properly
-import rice from "../../../../public/premium-rice.png";
-import tomatoes from "../../../../public/fresh-tomatoes.png";
-import spinach from "../../../../public/organic-spinach.png";
-import pepper from "../../../../public/black-pepper-pile.webp";
-
-// Mock data - Fixed image references
-const products = [
-  {
-    id: "PRD-001",
-    name: "Fresh Tomatoes",
-    category: "Vegetables",
-    vendor: "Fresh Farms Market",
-    price: 500,
-    stock: 150,
-    unit: "kg",
-    status: "active",
-    description: "Fresh organic tomatoes from local farms",
-    image: tomatoes, // This is now a StaticImageData object
-    createdAt: "2024-01-10",
-  },
-  {
-    id: "PRD-002",
-    name: "Premium Rice",
-    category: "Grains",
-    vendor: "Organic Delights",
-    price: 1200,
-    stock: 80,
-    unit: "kg",
-    status: "active",
-    description: "High-quality premium rice, perfect for all meals",
-    image: rice,
-    createdAt: "2024-01-08",
-  },
-  {
-    id: "PRD-003",
-    name: "Organic Spinach",
-    category: "Vegetables",
-    vendor: "Organic Delights",
-    price: 300,
-    stock: 0,
-    unit: "bunch",
-    status: "out_of_stock",
-    description: "Fresh organic spinach leaves",
-    image: spinach, 
-    createdAt: "2024-01-05",
-  },
-  {
-    id: "PRD-004",
-    name: "Black Pepper",
-    category: "Spices",
-    vendor: "Spice World",
-    price: 800,
-    stock: 45,
-    unit: "100g",
-    status: "inactive",
-    description: "Premium black pepper powder",
-    image: pepper, // Use imported pepper object
-    createdAt: "2024-01-03",
-  },
-];
-
-const categories = [
-  "All",
-  "Vegetables",
-  "Fruits",
-  "Grains",
-  "Spices",
-  "Dairy",
-  "Meat",
-  "Beverages",
-];
-const vendors = [
-  "Fresh Farms Market",
-  "Organic Delights",
-  "Spice World",
-  "Meat Masters",
-];
+// Default product image
+const defaultProductImage = "/placeholder-product.png";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -138,36 +79,107 @@ const getStatusColor = (status: string) => {
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      categoryFilter === "All" || product.category === categoryFilter;
-    return matchesSearch && matchesCategory;
+  // API hooks
+  const {
+    data: productsData,
+    isLoading: productsLoading,
+    error: productsError,
+    refetch: refetchProducts,
+  } = useProducts({
+    search: searchTerm || undefined,
+    category: categoryFilter === "all" ? undefined : categoryFilter,
   });
+
+  const {
+    data: metricsData,
+    isLoading: metricsLoading,
+    error: metricsError,
+  } = useProductMetrics();
+
+  const { data: categoriesData } = useProductCategories();
+  const { data: vendorsData } = useVendors();
+
+  const createProductMutation = useCreateProduct();
+  const updateProductMutation = useUpdateProduct();
+  const deleteProductMutation = useDeleteProduct();
+  const bulkUploadMutation = useBulkUploadProducts();
+
+  const products = productsData?.data || [];
+  const metrics = metricsData || {
+    totalProducts: 0,
+    activeProducts: 0,
+    outOfStock: 0,
+    totalValue: 0,
+  };
+  const categories = categoriesData || [];
+  const vendors = vendorsData?.data || [];
+
+  const handleCreateProduct = async (formData: CreateProductRequest) => {
+    try {
+      await createProductMutation.mutateAsync(formData);
+      setIsAddModalOpen(false);
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
+  };
+
+  const handleUpdateProduct = async (
+    id: number,
+    formData: UpdateProductRequest
+  ) => {
+    try {
+      await updateProductMutation.mutateAsync({ id, data: formData });
+      setEditingProduct(null);
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
+  };
+
+  const handleDeleteProduct = async (id: number) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      try {
+        await deleteProductMutation.mutateAsync(id);
+      } catch (error) {
+        // Error is handled by the mutation hook
+      }
+    }
+  };
+
+  const handleBulkUpload = async (file: File) => {
+    try {
+      await bulkUploadMutation.mutateAsync(file);
+      setIsExcelModalOpen(false);
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
+  };
 
   const handleDownloadTemplate = () => {
     // Create CSV template
     const headers = [
       "name",
-      "category",
-      "vendor",
-      "price",
-      "stock",
-      "unit",
       "description",
-      "status",
+      "category",
+      "price",
+      "unit",
+      "stockQuantity",
+      "sku",
+      "weight",
+      "dimensions",
+      "tags",
+      "isFeatured",
+      "isActive",
+      "vendorId",
     ];
     const csvContent =
       headers.join(",") +
       "\n" +
-      "Sample Product,Vegetables,Fresh Farms Market,500,100,kg,Sample description,active";
+      "Sample Product,Sample description,Vegetables,500,kg,100,SKU-001,1.0,10x10x5 cm,fresh;organic,true,true,1";
 
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
@@ -177,6 +189,17 @@ export default function ProductsPage() {
     a.click();
     window.URL.revokeObjectURL(url);
   };
+
+  if (productsError) {
+    return (
+      <ErrorDisplay
+        error={productsError}
+        onRetry={() => refetchProducts()}
+        title="Failed to load products"
+        description="There was an error loading the products data. Please try again."
+      />
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
@@ -202,34 +225,12 @@ export default function ProductsPage() {
                   Upload products using Excel/CSV file
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Download Template</Label>
-                  <Button
-                    variant="outline"
-                    onClick={handleDownloadTemplate}
-                    className="w-full bg-transparent"
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Excel Template
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="excel-file">Upload File</Label>
-                  <Input id="excel-file" type="file" accept=".csv,.xlsx,.xls" />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsExcelModalOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={() => setIsExcelModalOpen(false)}>
-                    Upload Products
-                  </Button>
-                </div>
-              </div>
+              <BulkUploadForm
+                onUpload={handleBulkUpload}
+                onDownloadTemplate={handleDownloadTemplate}
+                isLoading={bulkUploadMutation.isPending}
+                onCancel={() => setIsExcelModalOpen(false)}
+              />
             </DialogContent>
           </Dialog>
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
@@ -246,74 +247,13 @@ export default function ProductsPage() {
                   Create a new product for the mobile app
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="product-name">Product Name</Label>
-                  <Input id="product-name" placeholder="Enter product name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="product-category">Category</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.slice(1).map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="product-vendor">Vendor</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select vendor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vendors.map((vendor) => (
-                        <SelectItem key={vendor} value={vendor}>
-                          {vendor}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="product-price">Price (₦)</Label>
-                    <Input id="product-price" type="number" placeholder="0" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="product-unit">Unit</Label>
-                    <Input id="product-unit" placeholder="kg, piece, etc." />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="product-stock">Stock Quantity</Label>
-                  <Input id="product-stock" type="number" placeholder="0" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="product-description">Description</Label>
-                  <Textarea
-                    id="product-description"
-                    placeholder="Product description"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsAddModalOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={() => setIsAddModalOpen(false)}>
-                    Add Product
-                  </Button>
-                </div>
-              </div>
+              <ProductForm
+                categories={categories}
+                vendors={vendors}
+                onSubmit={handleCreateProduct}
+                isLoading={createProductMutation.isPending}
+                onCancel={() => setIsAddModalOpen(false)}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -321,53 +261,66 @@ export default function ProductsPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Products
-            </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Products
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {products.filter((p) => p.status === "active").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {products.filter((p) => p.status === "out_of_stock").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ₦
-              {products
-                .reduce((sum, p) => sum + p.price * p.stock, 0)
-                .toLocaleString()}
-            </div>
-          </CardContent>
-        </Card>
+        {metricsLoading ? (
+          Array.from({ length: 4 }).map((_, i) => <StatsCardSkeleton key={i} />)
+        ) : metricsError ? (
+          <div className="col-span-4">
+            <ErrorAlert error={metricsError} />
+          </div>
+        ) : (
+          <>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Products
+                </CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {metrics.totalProducts}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Active Products
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {metrics.activeProducts}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Out of Stock
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {metrics.outOfStock}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Value
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  ₦{metrics.totalValue.toLocaleString()}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       <Card>
@@ -387,6 +340,7 @@ export default function ProductsPage() {
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category}>
                     {category}
@@ -397,92 +351,380 @@ export default function ProductsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Vendor</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProducts.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      {/* Replace img with Next.js Image component */}
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        width={40}
-                        height={40}
-                        className="rounded-md object-cover"
-                      />
-                      <div>
-                        <div className="font-medium">{product.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {product.id}
+          {productsLoading ? (
+            <TableSkeleton />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Image
+                          src={product.imageUrl || defaultProductImage}
+                          alt={product.name}
+                          width={40}
+                          height={40}
+                          className="rounded-md object-cover"
+                        />
+                        <div>
+                          <div className="font-medium">{product.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            SKU: {product.sku}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{product.category}</Badge>
-                  </TableCell>
-                  <TableCell className="text-sm">{product.vendor}</TableCell>
-                  <TableCell>
-                    <div className="font-medium">
-                      ₦{product.price.toLocaleString()}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      per {product.unit}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div
-                      className={`font-medium ${
-                        product.stock === 0 ? "text-red-600" : ""
-                      }`}
-                    >
-                      {product.stock} {product.unit}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(product.status)}>
-                      {product.status.replace("_", " ")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm">
-                        {product.status === "active" ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive bg-transparent"
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{product.category}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {product.vendor?.name || "N/A"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">
+                        ₦{product.price.toLocaleString()}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        per {product.unit}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div
+                        className={`font-medium ${
+                          product.stockQuantity === 0 ? "text-red-600" : ""
+                        }`}
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                        {product.stockQuantity} {product.unit}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={getStatusColor(
+                          product.isActive ? "active" : "inactive"
+                        )}
+                      >
+                        {product.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingProduct(product)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive bg-transparent"
+                          onClick={() => handleDeleteProduct(product.id)}
+                          disabled={deleteProductMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
+
+      {/* Edit Product Dialog */}
+      {editingProduct && (
+        <Dialog
+          open={!!editingProduct}
+          onOpenChange={() => setEditingProduct(null)}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Product</DialogTitle>
+              <DialogDescription>Update product information</DialogDescription>
+            </DialogHeader>
+            <ProductForm
+              initialData={editingProduct}
+              categories={categories}
+              vendors={vendors}
+              onSubmit={(data) => handleUpdateProduct(editingProduct.id, data)}
+              isLoading={updateProductMutation.isPending}
+              onCancel={() => setEditingProduct(null)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
+  );
+}
+
+// Product Form Component
+interface ProductFormProps {
+  initialData?: Product;
+  categories: string[];
+  vendors: any[];
+  onSubmit: (data: CreateProductRequest | UpdateProductRequest) => void;
+  isLoading: boolean;
+  onCancel: () => void;
+}
+
+function ProductForm({
+  initialData,
+  categories,
+  vendors,
+  onSubmit,
+  isLoading,
+  onCancel,
+}: ProductFormProps) {
+  const [formData, setFormData] = useState({
+    name: initialData?.name || "",
+    description: initialData?.description || "",
+    category: initialData?.category || "",
+    price: initialData?.price || 0,
+    unit: initialData?.unit || "",
+    stockQuantity: initialData?.stockQuantity || 0,
+    sku: initialData?.sku || "",
+    weight: initialData?.weight || 0,
+    dimensions: initialData?.dimensions || "",
+    tags: initialData?.tags?.join(", ") || "",
+    isFeatured: initialData?.isFeatured || false,
+    isActive: initialData?.isActive ?? true,
+    vendorId: initialData?.vendorId || 0,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const submitData = {
+      ...formData,
+      tags: formData.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    };
+    onSubmit(submitData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">Product Name</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="category">Category</Label>
+          <Select
+            value={formData.category}
+            onValueChange={(value) =>
+              setFormData({ ...formData, category: value })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="vendor">Vendor</Label>
+          <Select
+            value={formData.vendorId.toString()}
+            onValueChange={(value) =>
+              setFormData({ ...formData, vendorId: parseInt(value) })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select vendor" />
+            </SelectTrigger>
+            <SelectContent>
+              {vendors.map((vendor) => (
+                <SelectItem key={vendor.id} value={vendor.id.toString()}>
+                  {vendor.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="price">Price (₦)</Label>
+          <Input
+            id="price"
+            type="number"
+            value={formData.price}
+            onChange={(e) =>
+              setFormData({ ...formData, price: parseFloat(e.target.value) })
+            }
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="unit">Unit</Label>
+          <Input
+            id="unit"
+            value={formData.unit}
+            onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+            placeholder="kg, piece, etc."
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="stock">Stock Quantity</Label>
+          <Input
+            id="stock"
+            type="number"
+            value={formData.stockQuantity}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                stockQuantity: parseInt(e.target.value),
+              })
+            }
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="sku">SKU</Label>
+          <Input
+            id="sku"
+            value={formData.sku}
+            onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="tags">Tags (comma-separated)</Label>
+        <Input
+          id="tags"
+          value={formData.tags}
+          onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+          placeholder="fresh, organic, premium"
+        />
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading
+            ? "Saving..."
+            : initialData
+            ? "Update Product"
+            : "Add Product"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// Bulk Upload Form Component
+interface BulkUploadFormProps {
+  onUpload: (file: File) => void;
+  onDownloadTemplate: () => void;
+  isLoading: boolean;
+  onCancel: () => void;
+}
+
+function BulkUploadForm({
+  onUpload,
+  onDownloadTemplate,
+  isLoading,
+  onCancel,
+}: BulkUploadFormProps) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedFile) {
+      onUpload(selectedFile);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label>Download Template</Label>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onDownloadTemplate}
+          className="w-full bg-transparent"
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Download Excel Template
+        </Button>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="excel-file">Upload File</Label>
+        <Input
+          id="excel-file"
+          type="file"
+          accept=".csv,.xlsx,.xls"
+          onChange={handleFileChange}
+          required
+        />
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isLoading || !selectedFile}>
+          {isLoading ? "Uploading..." : "Upload Products"}
+        </Button>
+      </div>
+    </form>
   );
 }
