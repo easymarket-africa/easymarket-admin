@@ -90,14 +90,30 @@ Please confirm receipt and update status accordingly.`;
   const handleShareToWhatsApp = () => {
     if (!selectedGroup) return;
 
-    const group = agentGroups.find((g) => g.id === selectedGroup);
-    if (!group) return;
+    let phoneNumber = "";
+    let recipientName = "";
+
+    // Check if it's an agent (starts with "agent-")
+    if (selectedGroup.startsWith("agent-")) {
+      const agentId = selectedGroup.replace("agent-", "");
+      const agent = order.assignedAgent;
+      if (agent) {
+        phoneNumber = agent.phoneNumber.replace(/\s+/g, "");
+        recipientName = agent.name;
+      }
+    } else {
+      // It's a group
+      const group = agentGroups.find((g) => g.id === selectedGroup);
+      if (group) {
+        phoneNumber = group.phone.replace(/\s+/g, "");
+        recipientName = group.name;
+      }
+    }
+
+    if (!phoneNumber) return;
 
     const encodedMessage = encodeURIComponent(finalMessage);
-    const whatsappUrl = `https://wa.me/${group.phone.replace(
-      /\s+/g,
-      ""
-    )}?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
     window.open(whatsappUrl, "_blank");
   };
@@ -112,35 +128,75 @@ Please confirm receipt and update status accordingly.`;
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-green-600" />
-            Share Order to WhatsApp Group
+            Share Order via WhatsApp
           </DialogTitle>
           <DialogDescription>
-            Share order {order.orderNumber} details with your delivery agent
+            Send order {order.orderNumber} details to assigned agent or delivery
             groups
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Group Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="group-select">Select Agent Group</Label>
-            <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a WhatsApp group" />
-              </SelectTrigger>
-              <SelectContent>
-                {agentGroups.map((group) => (
-                  <SelectItem key={group.id} value={group.id}>
-                    <div className="flex flex-col">
-                      <span>{group.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {group.phone}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Agent Selection */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="recipient-select">Choose Recipient</Label>
+              <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose recipient" />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Assigned Agent Option */}
+                  {order.assignedAgent && (
+                    <SelectItem value={`agent-${order.assignedAgent.id}`}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          📱 {order.assignedAgent.name} (Assigned Agent)
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {order.assignedAgent.phoneNumber}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  )}
+
+                  {/* Group Options */}
+                  {agentGroups.map((group) => (
+                    <SelectItem key={group.id} value={group.id}>
+                      <div className="flex flex-col">
+                        <span>👥 {group.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {group.phone}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Agent Info Display */}
+            {order.assignedAgent &&
+              selectedGroup === `agent-${order.assignedAgent.id}` && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                      📱 Direct Message to Assigned Agent
+                    </span>
+                  </div>
+                  <div className="text-sm text-blue-700 dark:text-blue-300">
+                    <p>
+                      <strong>Name:</strong> {order.assignedAgent.name}
+                    </p>
+                    <p>
+                      <strong>Phone:</strong> {order.assignedAgent.phoneNumber}
+                    </p>
+                    <p>
+                      <strong>Email:</strong> {order.assignedAgent.email}
+                    </p>
+                  </div>
+                </div>
+              )}
           </div>
 
           {/* Message Preview/Edit */}
@@ -185,11 +241,12 @@ Please confirm receipt and update status accordingly.`;
           <div className="bg-muted/50 p-4 rounded-lg">
             <h4 className="font-medium mb-2">How it works:</h4>
             <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-              <li>Select the appropriate agent group for this order</li>
-              <li>Review and customize the message if needed</li>
               <li>
-                Click &quot;Open in WhatsApp&quot; to share with the group
+                Choose to send to the assigned agent directly or to a delivery
+                group
               </li>
+              <li>Review and customize the message if needed</li>
+              <li>Click &quot;Open in WhatsApp&quot; to send the message</li>
               <li>The message will open in WhatsApp Web/App ready to send</li>
             </ol>
           </div>

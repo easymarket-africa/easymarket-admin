@@ -17,7 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Phone, Copy, MapPin, Settings, X, CheckCircle } from "lucide-react";
+import {
+  Phone,
+  Copy,
+  MapPin,
+  Settings,
+  X,
+  CheckCircle,
+  MessageCircle,
+} from "lucide-react";
 import { useState } from "react";
 import {
   useUpdateOrderStatus,
@@ -347,17 +355,44 @@ export function OrderDetailsModal({
           <div className="space-y-3">
             <h3 className="font-semibold">Assigned Agent</h3>
             {order.assignedAgent ? (
-              <div>
-                <p className="font-medium">{order.assignedAgent.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  Agent ID: {order.assignedAgent.id}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Phone: {order.assignedAgent.phoneNumber}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Email: {order.assignedAgent.email}
-                </p>
+              <div className="space-y-3">
+                <div>
+                  <p className="font-medium">{order.assignedAgent.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Agent ID: {order.assignedAgent.id}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Phone: {order.assignedAgent.phoneNumber}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Email: {order.assignedAgent.email}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const message = `🚚 ORDER UPDATE 🚚
+
+Order: ${order.orderNumber}
+Customer: ${order.customer.name}
+Status: ${order.status.replace("_", " ").toUpperCase()}
+
+Please check the admin panel for full details.`;
+                      const encodedMessage = encodeURIComponent(message);
+                      const whatsappUrl = `https://wa.me/${order.assignedAgent?.phoneNumber.replace(
+                        /\s+/g,
+                        ""
+                      )}?text=${encodedMessage}`;
+                      window.open(whatsappUrl, "_blank");
+                    }}
+                    className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Send WhatsApp
+                  </Button>
+                </div>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
