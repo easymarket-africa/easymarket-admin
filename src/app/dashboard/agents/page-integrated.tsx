@@ -37,7 +37,6 @@ import {
   UpdateAgentRequest,
   AgentDetails,
 } from "@/types/api";
-// import { toast } from "sonner"; // Unused
 
 const getStatusColor = (status: string) => {
   switch (status) {
