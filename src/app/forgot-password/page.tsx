@@ -2,6 +2,9 @@
 
 import type React from "react";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,8 +83,8 @@ export default function ForgotPasswordPage() {
         onSuccess: () => {
           setStep("reset");
         },
-        onError: (error: Error) => {
-          setError(error.message || "Failed to send reset code");
+        onError: (error: unknown) => {
+          setError((error as Error).message || "Failed to send reset code");
         },
       }
     );
@@ -98,8 +101,8 @@ export default function ForgotPasswordPage() {
     resetPasswordMutation.mutate(
       { email, code: resetCode, newPassword },
       {
-        onError: (error: Error) => {
-          setError(error.message || "Failed to reset password");
+        onError: (error: unknown) => {
+          setError((error as Error).message || "Failed to reset password");
         },
       }
     );

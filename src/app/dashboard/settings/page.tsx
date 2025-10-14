@@ -1,17 +1,42 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Settings, Bell, Shield, CreditCard, MessageSquare, Globe, Save, AlertTriangle, Plus } from "lucide-react"
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Settings,
+  Bell,
+  Shield,
+  CreditCard,
+  MessageSquare,
+  Globe,
+  Save,
+  AlertTriangle,
+  Plus,
+} from "lucide-react";
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState({
@@ -19,14 +44,16 @@ export default function SettingsPage() {
     agentAlerts: true,
     systemMaintenance: false,
     weeklyReports: true,
-  })
+  });
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">Manage your application settings and preferences</p>
+          <p className="text-muted-foreground">
+            Manage your application settings and preferences
+          </p>
         </div>
       </div>
 
@@ -46,7 +73,9 @@ export default function SettingsPage() {
                 <Settings className="h-5 w-5" />
                 General Settings
               </CardTitle>
-              <CardDescription>Configure basic application settings</CardDescription>
+              <CardDescription>
+                Configure basic application settings
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -63,7 +92,9 @@ export default function SettingsPage() {
                     <SelectContent>
                       <SelectItem value="africa/lagos">Africa/Lagos</SelectItem>
                       <SelectItem value="utc">UTC</SelectItem>
-                      <SelectItem value="america/new_york">America/New_York</SelectItem>
+                      <SelectItem value="america/new_york">
+                        America/New_York
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -79,7 +110,11 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="support-email">Support Email</Label>
-                  <Input id="support-email" type="email" defaultValue="support@freshmarket.com" />
+                  <Input
+                    id="support-email"
+                    type="email"
+                    defaultValue="support@freshmarket.com"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="support-phone">Support Phone</Label>
@@ -101,50 +136,80 @@ export default function SettingsPage() {
                 <Bell className="h-5 w-5" />
                 Notification Preferences
               </CardTitle>
-              <CardDescription>Configure when and how you receive notifications</CardDescription>
+              <CardDescription>
+                Configure when and how you receive notifications
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Order Updates</Label>
-                  <p className="text-sm text-muted-foreground">Get notified when orders are placed or updated</p>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified when orders are placed or updated
+                  </p>
                 </div>
                 <Switch
                   checked={notifications.orderUpdates}
-                  onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, orderUpdates: checked }))}
+                  onCheckedChange={(checked) =>
+                    setNotifications((prev) => ({
+                      ...prev,
+                      orderUpdates: checked,
+                    }))
+                  }
                 />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Agent Alerts</Label>
-                  <p className="text-sm text-muted-foreground">Receive alerts about agent status changes</p>
+                  <p className="text-sm text-muted-foreground">
+                    Receive alerts about agent status changes
+                  </p>
                 </div>
                 <Switch
                   checked={notifications.agentAlerts}
-                  onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, agentAlerts: checked }))}
+                  onCheckedChange={(checked) =>
+                    setNotifications((prev) => ({
+                      ...prev,
+                      agentAlerts: checked,
+                    }))
+                  }
                 />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>System Maintenance</Label>
-                  <p className="text-sm text-muted-foreground">Get notified about scheduled maintenance</p>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified about scheduled maintenance
+                  </p>
                 </div>
                 <Switch
                   checked={notifications.systemMaintenance}
-                  onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, systemMaintenance: checked }))}
+                  onCheckedChange={(checked) =>
+                    setNotifications((prev) => ({
+                      ...prev,
+                      systemMaintenance: checked,
+                    }))
+                  }
                 />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Weekly Reports</Label>
-                  <p className="text-sm text-muted-foreground">Receive weekly performance reports</p>
+                  <p className="text-sm text-muted-foreground">
+                    Receive weekly performance reports
+                  </p>
                 </div>
                 <Switch
                   checked={notifications.weeklyReports}
-                  onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, weeklyReports: checked }))}
+                  onCheckedChange={(checked) =>
+                    setNotifications((prev) => ({
+                      ...prev,
+                      weeklyReports: checked,
+                    }))
+                  }
                 />
               </div>
               <Button>
@@ -162,7 +227,9 @@ export default function SettingsPage() {
                 <Shield className="h-5 w-5" />
                 Security Settings
               </CardTitle>
-              <CardDescription>Manage your account security and access controls</CardDescription>
+              <CardDescription>
+                Manage your account security and access controls
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -184,11 +251,17 @@ export default function SettingsPage() {
               <Separator />
 
               <div className="space-y-4">
-                <h4 className="text-sm font-medium">Two-Factor Authentication</h4>
+                <h4 className="text-sm font-medium">
+                  Two-Factor Authentication
+                </h4>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm">Enable 2FA for additional security</p>
-                    <p className="text-xs text-muted-foreground">Recommended for admin accounts</p>
+                    <p className="text-sm">
+                      Enable 2FA for additional security
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Recommended for admin accounts
+                    </p>
                   </div>
                   <Button variant="outline">Enable 2FA</Button>
                 </div>
@@ -204,7 +277,9 @@ export default function SettingsPage() {
                 <MessageSquare className="h-5 w-5" />
                 WhatsApp Integration
               </CardTitle>
-              <CardDescription>Configure WhatsApp settings for order sharing</CardDescription>
+              <CardDescription>
+                Configure WhatsApp settings for order sharing
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -213,7 +288,9 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Lagos Agents</p>
-                      <p className="text-sm text-muted-foreground">12 members</p>
+                      <p className="text-sm text-muted-foreground">
+                        12 members
+                      </p>
                     </div>
                     <Badge variant="secondary">Active</Badge>
                   </div>
@@ -239,13 +316,18 @@ export default function SettingsPage() {
                 <Globe className="h-5 w-5" />
                 API Settings
               </CardTitle>
-              <CardDescription>Manage API keys and external integrations</CardDescription>
+              <CardDescription>
+                Manage API keys and external integrations
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>API Key</Label>
                 <div className="flex gap-2">
-                  <Input value="sk_live_••••••••••••••••••••••••••••" readOnly />
+                  <Input
+                    value="sk_live_••••••••••••••••••••••••••••"
+                    readOnly
+                  />
                   <Button variant="outline">Regenerate</Button>
                 </div>
               </div>
@@ -253,8 +335,12 @@ export default function SettingsPage() {
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-medium text-yellow-800 dark:text-yellow-200">API Usage</p>
-                    <p className="text-yellow-700 dark:text-yellow-300">1,234 requests this month (80% of limit)</p>
+                    <p className="font-medium text-yellow-800 dark:text-yellow-200">
+                      API Usage
+                    </p>
+                    <p className="text-yellow-700 dark:text-yellow-300">
+                      1,234 requests this month (80% of limit)
+                    </p>
                   </div>
                 </div>
               </div>
@@ -269,7 +355,9 @@ export default function SettingsPage() {
                 <CreditCard className="h-5 w-5" />
                 Billing Information
               </CardTitle>
-              <CardDescription>Manage your subscription and payment methods</CardDescription>
+              <CardDescription>
+                Manage your subscription and payment methods
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 border rounded-lg">
@@ -277,7 +365,9 @@ export default function SettingsPage() {
                   <h4 className="font-medium">Current Plan</h4>
                   <Badge>Pro Plan</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">₦25,000/month • Next billing: Jan 15, 2024</p>
+                <p className="text-sm text-muted-foreground">
+                  ₦25,000/month • Next billing: Jan 15, 2024
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -287,7 +377,9 @@ export default function SettingsPage() {
                     <CreditCard className="h-4 w-4" />
                     <div>
                       <p className="font-medium">•••• •••• •••• 4242</p>
-                      <p className="text-sm text-muted-foreground">Expires 12/25</p>
+                      <p className="text-sm text-muted-foreground">
+                        Expires 12/25
+                      </p>
                     </div>
                   </div>
                   <Button variant="outline" size="sm">
@@ -305,5 +397,5 @@ export default function SettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
