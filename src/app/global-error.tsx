@@ -33,17 +33,18 @@ export default function GlobalError({
                 An unexpected error occurred. Please try again or contact
                 support if the problem persists.
               </p>
-              {process.env.NODE_ENV === "development" && (
-                <details className="text-left">
-                  <summary className="cursor-pointer text-sm font-medium">
-                    Error Details (Development)
-                  </summary>
-                  <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto">
-                    {error.message}
-                    {error.stack}
-                  </pre>
-                </details>
-              )}
+              {typeof window !== "undefined" &&
+                process.env.NODE_ENV === "development" && (
+                  <details className="text-left">
+                    <summary className="cursor-pointer text-sm font-medium">
+                      Error Details (Development)
+                    </summary>
+                    <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto">
+                      {error.message}
+                      {error.stack}
+                    </pre>
+                  </details>
+                )}
               <Button onClick={reset} className="w-full">
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Try Again

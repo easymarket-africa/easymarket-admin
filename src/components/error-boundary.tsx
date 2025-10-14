@@ -52,17 +52,19 @@ export class ErrorBoundary extends Component<Props, State> {
                 An unexpected error occurred. Please try again or contact
                 support if the problem persists.
               </p>
-              {process.env.NODE_ENV === "development" && this.state.error && (
-                <details className="text-left">
-                  <summary className="cursor-pointer text-sm font-medium">
-                    Error Details (Development)
-                  </summary>
-                  <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto">
-                    {this.state.error.message}
-                    {this.state.error.stack}
-                  </pre>
-                </details>
-              )}
+              {typeof window !== "undefined" &&
+                process.env.NODE_ENV === "development" &&
+                this.state.error && (
+                  <details className="text-left">
+                    <summary className="cursor-pointer text-sm font-medium">
+                      Error Details (Development)
+                    </summary>
+                    <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto">
+                      {this.state.error.message}
+                      {this.state.error.stack}
+                    </pre>
+                  </details>
+                )}
               <Button onClick={this.handleRetry} className="w-full">
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Try Again
