@@ -8,6 +8,7 @@ import {
   AgentFilters,
   CreateAgentRequest,
   UpdateAgentRequest,
+  ExtendedError,
 } from "@/types/api";
 import { toast } from "sonner";
 
@@ -82,7 +83,7 @@ export function useCreateAgent() {
 
   return useMutation({
     mutationFn: (data: CreateAgentRequest) => agentsService.createAgent(data),
-    onSuccess: (newAgent: AgentDetails) => {
+    onSuccess: () => {
       // Invalidate agents list to refresh
       queryClient.invalidateQueries({
         queryKey: queryKeys.agents.lists(),
@@ -95,11 +96,11 @@ export function useCreateAgent() {
 
       toast.success("Agent created successfully");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error("Agent creation error:", error);
       const errorMessage =
-        error?.message ||
-        error?.response?.data?.message ||
+        (error as Error)?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to create agent";
       toast.error(errorMessage);
     },
@@ -134,11 +135,11 @@ export function useUpdateAgent() {
 
       toast.success("Agent updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error("Agent update error:", error);
       const errorMessage =
-        error?.message ||
-        error?.response?.data?.message ||
+        (error as Error)?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to update agent";
       toast.error(errorMessage);
     },
@@ -171,11 +172,11 @@ export function useDeleteAgent() {
 
       toast.success("Agent deleted successfully");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error("Agent deletion error:", error);
       const errorMessage =
-        error?.message ||
-        error?.response?.data?.message ||
+        (error as Error)?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to delete agent";
       toast.error(errorMessage);
     },
@@ -210,11 +211,11 @@ export function useSuspendAgent() {
 
       toast.success("Agent suspended successfully");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error("Agent suspension error:", error);
       const errorMessage =
-        error?.message ||
-        error?.response?.data?.message ||
+        (error as Error)?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to suspend agent";
       toast.error(errorMessage);
     },
@@ -248,11 +249,11 @@ export function useActivateAgent() {
 
       toast.success("Agent activated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error("Agent activation error:", error);
       const errorMessage =
-        error?.message ||
-        error?.response?.data?.message ||
+        (error as Error)?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to activate agent";
       toast.error(errorMessage);
     },
@@ -282,11 +283,11 @@ export function useUpdateAgentRating() {
 
       toast.success("Agent rating updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error("Agent rating update error:", error);
       const errorMessage =
-        error?.message ||
-        error?.response?.data?.message ||
+        (error as Error)?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to update agent rating";
       toast.error(errorMessage);
     },

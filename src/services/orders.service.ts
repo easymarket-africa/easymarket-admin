@@ -2,12 +2,12 @@ import { apiClient } from "@/lib/api-client";
 import {
   Order,
   OrderFilters,
-  PaginatedResponse,
   OrdersResponse,
   UpdateOrderStatusRequest,
   AssignAgentRequest,
   CancelOrderRequest,
   AgentDetails,
+  OrderHistoryEntry,
 } from "@/types/api";
 
 /**
@@ -86,8 +86,8 @@ export class OrdersService {
   /**
    * Get order history/logs
    */
-  async getOrderHistory(id: number): Promise<any[]> {
-    return apiClient.get<any[]>(`${this.basePath}/${id}/history`);
+  async getOrderHistory(id: number): Promise<OrderHistoryEntry[]> {
+    return apiClient.get<OrderHistoryEntry[]>(`${this.basePath}/${id}/history`);
   }
 
   /**

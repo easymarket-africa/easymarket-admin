@@ -48,7 +48,7 @@ export const queryKeys = {
   orders: {
     all: ["orders"] as const,
     lists: () => [...queryKeys.orders.all, "list"] as const,
-    list: (filters: Record<string, any>) =>
+    list: (filters: Record<string, unknown>) =>
       [...queryKeys.orders.lists(), filters] as const,
     details: () => [...queryKeys.orders.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.orders.details(), id] as const,
@@ -58,7 +58,7 @@ export const queryKeys = {
   products: {
     all: ["products"] as const,
     lists: () => [...queryKeys.products.all, "list"] as const,
-    list: (filters: Record<string, any>) =>
+    list: (filters: Record<string, unknown>) =>
       [...queryKeys.products.lists(), filters] as const,
     details: () => [...queryKeys.products.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.products.details(), id] as const,
@@ -69,7 +69,7 @@ export const queryKeys = {
   agents: {
     all: ["agents"] as const,
     lists: () => [...queryKeys.agents.all, "list"] as const,
-    list: (filters: Record<string, any>) =>
+    list: (filters: Record<string, unknown>) =>
       [...queryKeys.agents.lists(), filters] as const,
     details: () => [...queryKeys.agents.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.agents.details(), id] as const,
@@ -80,7 +80,7 @@ export const queryKeys = {
   vendors: {
     all: ["vendors"] as const,
     lists: () => [...queryKeys.vendors.all, "list"] as const,
-    list: (filters: Record<string, any>) =>
+    list: (filters: Record<string, unknown>) =>
       [...queryKeys.vendors.lists(), filters] as const,
     details: () => [...queryKeys.vendors.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.vendors.details(), id] as const,
@@ -90,7 +90,7 @@ export const queryKeys = {
   // Analytics
   analytics: {
     all: ["analytics"] as const,
-    overview: (filters: Record<string, any>) =>
+    overview: (filters: Record<string, unknown>) =>
       [...queryKeys.analytics.all, "overview", filters] as const,
   },
 

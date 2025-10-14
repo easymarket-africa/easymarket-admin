@@ -25,11 +25,11 @@ export async function testAuthIntegration() {
         email: "test@example.com",
         password: "testpassword",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log(
         "   - Login service structure is correct (expected to fail with test credentials)"
       );
-      console.log("   - Error message:", error.message);
+      console.log("   - Error message:", (error as Error).message);
     }
 
     // Test 3: Test token storage
@@ -144,11 +144,11 @@ export async function testForgotPasswordIntegration() {
       await authService.requestPasswordReset({
         email: "test@example.com",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log(
         "   - Forgot password service structure is correct (expected to fail with test credentials)"
       );
-      console.log("   - Error message:", error.message);
+      console.log("   - Error message:", (error as Error).message);
     }
 
     // Test 2: Test reset password
@@ -159,11 +159,11 @@ export async function testForgotPasswordIntegration() {
         code: "123456",
         newPassword: "newpassword123",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log(
         "   - Reset password service structure is correct (expected to fail with test credentials)"
       );
-      console.log("   - Error message:", error.message);
+      console.log("   - Error message:", (error as Error).message);
     }
 
     console.log("✅ Forgot password integration test completed successfully!");
@@ -188,11 +188,11 @@ export async function testEmailVerificationIntegration() {
         email: "test@example.com",
         code: "123456",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log(
         "   - Email verification service structure is correct (expected to fail with test credentials)"
       );
-      console.log("   - Error message:", error.message);
+      console.log("   - Error message:", (error as Error).message);
     }
 
     // Test 2: Test resend verification
@@ -201,11 +201,11 @@ export async function testEmailVerificationIntegration() {
       await authService.resendVerification({
         email: "test@example.com",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log(
         "   - Resend verification service structure is correct (expected to fail with test credentials)"
       );
-      console.log("   - Error message:", error.message);
+      console.log("   - Error message:", (error as Error).message);
     }
 
     console.log(

@@ -32,8 +32,12 @@ import {
 } from "@/hooks/use-agents";
 import { TableSkeleton, StatsCardSkeleton } from "@/components/loading-states";
 import { ErrorDisplay, ErrorAlert } from "@/components/error-display";
-import { CreateAgentRequest, UpdateAgentRequest } from "@/types/api";
-import { toast } from "sonner";
+import {
+  CreateAgentRequest,
+  UpdateAgentRequest,
+  AgentDetails,
+} from "@/types/api";
+// import { toast } from "sonner"; // Unused
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -62,7 +66,7 @@ const formatRating = (rating: string | number): string => {
 export default function AgentsPageIntegrated() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingAgent, setEditingAgent] = useState<any>(null);
+  const [editingAgent, setEditingAgent] = useState<AgentDetails | null>(null);
 
   // API hooks
   const {
@@ -98,7 +102,7 @@ export default function AgentsPageIntegrated() {
     try {
       await createAgentMutation.mutateAsync(formData as CreateAgentRequest);
       setIsAddModalOpen(false);
-    } catch (error) {
+    } catch {
       // Error is handled by the mutation hook
     }
   };
@@ -110,7 +114,7 @@ export default function AgentsPageIntegrated() {
     try {
       await updateAgentMutation.mutateAsync({ id, data: formData });
       setEditingAgent(null);
-    } catch (error) {
+    } catch {
       // Error is handled by the mutation hook
     }
   };
@@ -122,7 +126,7 @@ export default function AgentsPageIntegrated() {
     ) {
       try {
         await deleteAgentMutation.mutateAsync(id);
-      } catch (error) {
+      } catch {
         // Error is handled by the mutation hook
       }
     }
@@ -357,7 +361,7 @@ export default function AgentsPageIntegrated() {
 
 // Agent Form Component
 interface AgentFormProps {
-  initialData?: any;
+  initialData?: AgentDetails;
   onSubmit: (data: CreateAgentRequest | UpdateAgentRequest) => void;
   isLoading: boolean;
   onCancel: () => void;
@@ -385,7 +389,7 @@ function AgentForm({
     e.preventDefault();
 
     // Build payload with only provided fields
-    const submitData: any = {
+    const submitData: CreateAgentRequest | UpdateAgentRequest = {
       fullName: formData.fullName,
       email: formData.email,
       phoneNumber: formData.phoneNumber,
@@ -398,14 +402,16 @@ function AgentForm({
     if (formData.workingHoursStart && formData.workingHoursEnd) {
       // For create requests, use workingHours object
       if (!initialData) {
-        submitData.workingHours = {
+        (submitData as CreateAgentRequest).workingHours = {
           start: formData.workingHoursStart,
           end: formData.workingHoursEnd,
         };
       } else {
         // For update requests, use separate fields
-        submitData.workingHoursStart = formData.workingHoursStart;
-        submitData.workingHoursEnd = formData.workingHoursEnd;
+        (submitData as UpdateAgentRequest).workingHoursStart =
+          formData.workingHoursStart;
+        (submitData as UpdateAgentRequest).workingHoursEnd =
+          formData.workingHoursEnd;
       }
     }
     if (formData.serviceAreas.trim()) {

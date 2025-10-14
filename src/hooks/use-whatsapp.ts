@@ -65,7 +65,7 @@ export function useCreateWhatsAppGroup() {
   return useMutation({
     mutationFn: (data: CreateWhatsAppGroupRequest) =>
       whatsappService.createGroup(data),
-    onSuccess: (newGroup: WhatsAppGroup) => {
+    onSuccess: () => {
       // Invalidate groups list to refresh
       queryClient.invalidateQueries({
         queryKey: queryKeys.whatsapp.groups(),
@@ -73,7 +73,7 @@ export function useCreateWhatsAppGroup() {
 
       toast.success("WhatsApp group created successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to create WhatsApp group");
     },
   });
@@ -107,7 +107,7 @@ export function useUpdateWhatsAppGroup() {
 
       toast.success("WhatsApp group updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update WhatsApp group");
     },
   });
@@ -134,7 +134,7 @@ export function useDeleteWhatsAppGroup() {
 
       toast.success("WhatsApp group deleted successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to delete WhatsApp group");
     },
   });
@@ -159,7 +159,7 @@ export function useSendWhatsAppMessage() {
 
       toast.success("WhatsApp message sent successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to send WhatsApp message");
     },
   });

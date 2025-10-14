@@ -80,7 +80,7 @@ export default function ForgotPasswordPage() {
         onSuccess: () => {
           setStep("reset");
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
           setError(error.message || "Failed to send reset code");
         },
       }
@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
     resetPasswordMutation.mutate(
       { email, code: resetCode, newPassword },
       {
-        onError: (error: any) => {
+        onError: (error: Error) => {
           setError(error.message || "Failed to reset password");
         },
       }

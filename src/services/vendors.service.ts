@@ -6,6 +6,8 @@ import {
   PaginatedResponse,
   CreateVendorRequest,
   UpdateVendorRequest,
+  Product,
+  Order,
 } from "@/types/api";
 
 /**
@@ -77,15 +79,15 @@ export class VendorsService {
   /**
    * Get vendor's products
    */
-  async getVendorProducts(id: number): Promise<any[]> {
-    return apiClient.get<any[]>(`${this.basePath}/${id}/products`);
+  async getVendorProducts(id: number): Promise<Product[]> {
+    return apiClient.get<Product[]>(`${this.basePath}/${id}/products`);
   }
 
   /**
    * Get vendor's orders
    */
-  async getVendorOrders(id: number): Promise<any[]> {
-    return apiClient.get<any[]>(`${this.basePath}/${id}/orders`);
+  async getVendorOrders(id: number): Promise<Order[]> {
+    return apiClient.get<Order[]>(`${this.basePath}/${id}/orders`);
   }
 
   /**

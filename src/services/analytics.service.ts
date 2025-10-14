@@ -1,5 +1,12 @@
 import { apiClient } from "@/lib/api-client";
-import { AnalyticsOverview, AnalyticsFilters } from "@/types/api";
+import {
+  AnalyticsOverview,
+  AnalyticsFilters,
+  RevenueTrends,
+  OrderTrends,
+  AgentPerformance,
+  ProductPerformance,
+} from "@/types/api";
 
 /**
  * Analytics Service
@@ -34,7 +41,9 @@ export class AnalyticsService {
   /**
    * Get revenue trends
    */
-  async getRevenueTrends(filters: AnalyticsFilters = {}): Promise<any> {
+  async getRevenueTrends(
+    filters: AnalyticsFilters = {}
+  ): Promise<RevenueTrends> {
     const params = new URLSearchParams();
 
     Object.entries(filters).forEach(([key, value]) => {
@@ -48,13 +57,13 @@ export class AnalyticsService {
       ? `${this.basePath}/revenue/trends?${queryString}`
       : `${this.basePath}/revenue/trends`;
 
-    return apiClient.get<any>(url);
+    return apiClient.get<RevenueTrends>(url);
   }
 
   /**
    * Get order trends
    */
-  async getOrderTrends(filters: AnalyticsFilters = {}): Promise<any> {
+  async getOrderTrends(filters: AnalyticsFilters = {}): Promise<OrderTrends> {
     const params = new URLSearchParams();
 
     Object.entries(filters).forEach(([key, value]) => {
@@ -68,13 +77,15 @@ export class AnalyticsService {
       ? `${this.basePath}/orders/trends?${queryString}`
       : `${this.basePath}/orders/trends`;
 
-    return apiClient.get<any>(url);
+    return apiClient.get<OrderTrends>(url);
   }
 
   /**
    * Get agent performance analytics
    */
-  async getAgentPerformance(filters: AnalyticsFilters = {}): Promise<any> {
+  async getAgentPerformance(
+    filters: AnalyticsFilters = {}
+  ): Promise<AgentPerformance[]> {
     const params = new URLSearchParams();
 
     Object.entries(filters).forEach(([key, value]) => {
@@ -88,13 +99,15 @@ export class AnalyticsService {
       ? `${this.basePath}/agents/performance?${queryString}`
       : `${this.basePath}/agents/performance`;
 
-    return apiClient.get<any>(url);
+    return apiClient.get<AgentPerformance[]>(url);
   }
 
   /**
    * Get product performance analytics
    */
-  async getProductPerformance(filters: AnalyticsFilters = {}): Promise<any> {
+  async getProductPerformance(
+    filters: AnalyticsFilters = {}
+  ): Promise<ProductPerformance[]> {
     const params = new URLSearchParams();
 
     Object.entries(filters).forEach(([key, value]) => {
@@ -108,7 +121,7 @@ export class AnalyticsService {
       ? `${this.basePath}/products/performance?${queryString}`
       : `${this.basePath}/products/performance`;
 
-    return apiClient.get<any>(url);
+    return apiClient.get<ProductPerformance[]>(url);
   }
 }
 

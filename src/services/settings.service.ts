@@ -5,6 +5,8 @@ import {
   SecuritySettings,
   IntegrationSettings,
   BillingSettings,
+  BackupSettings,
+  SystemLog,
 } from "@/types/api";
 
 /**
@@ -79,8 +81,8 @@ export class SettingsService {
   }
 
   // Backup Settings
-  async getBackupSettings(): Promise<any> {
-    return apiClient.get<any>(`${this.basePath}/backup`);
+  async getBackupSettings(): Promise<BackupSettings> {
+    return apiClient.get<BackupSettings>(`${this.basePath}/backup`);
   }
 
   async createBackup(): Promise<{ message: string; backupId: string }> {
@@ -92,7 +94,7 @@ export class SettingsService {
   // System Logs
   async getSystemLogs(
     filters: { page?: number; limit?: number; level?: string } = {}
-  ): Promise<any> {
+  ): Promise<SystemLog[]> {
     const params = new URLSearchParams();
 
     Object.entries(filters).forEach(([key, value]) => {
@@ -106,7 +108,7 @@ export class SettingsService {
       ? `${this.basePath}/logs?${queryString}`
       : `${this.basePath}/logs`;
 
-    return apiClient.get<any>(url);
+    return apiClient.get<SystemLog[]>(url);
   }
 
   // Maintenance Mode

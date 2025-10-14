@@ -7,6 +7,7 @@ import {
   AvailableAgentsResponse,
   CreateAgentRequest,
   UpdateAgentRequest,
+  Order,
 } from "@/types/api";
 
 /**
@@ -85,8 +86,8 @@ export class AgentsService {
   /**
    * Get agent's order history
    */
-  async getAgentOrders(id: number): Promise<any[]> {
-    return apiClient.get<any[]>(`${this.basePath}/${id}/orders`);
+  async getAgentOrders(id: number): Promise<Order[]> {
+    return apiClient.get<Order[]>(`${this.basePath}/${id}/orders`);
   }
 
   /**

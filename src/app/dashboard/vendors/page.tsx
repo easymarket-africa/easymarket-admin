@@ -34,7 +34,12 @@ import {
 } from "@/hooks/use-vendors";
 import { TableSkeleton, StatsCardSkeleton } from "@/components/loading-states";
 import { ErrorDisplay, ErrorAlert } from "@/components/error-display";
-import { CreateVendorRequest, UpdateVendorRequest } from "@/types/api";
+import {
+  CreateVendorRequest,
+  UpdateVendorRequest,
+  VendorDetails,
+  ExtendedError,
+} from "@/types/api";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -52,7 +57,9 @@ const getStatusColor = (status: string) => {
 export default function VendorsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingVendor, setEditingVendor] = useState<any>(null);
+  const [editingVendor, setEditingVendor] = useState<VendorDetails | null>(
+    null
+  );
 
   // API hooks
   const {
@@ -86,12 +93,12 @@ export default function VendorsPage() {
     try {
       await createVendorMutation.mutateAsync(formData);
       setIsAddModalOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Error is handled by the mutation hook, but we can also handle it here as backup
       console.error("Vendor creation error in handler:", error);
       const errorMessage =
-        error?.message ||
-        error?.response?.data?.message ||
+        (error as Error)?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to create vendor";
       toast.error(errorMessage);
     }
@@ -104,12 +111,12 @@ export default function VendorsPage() {
     try {
       await updateVendorMutation.mutateAsync({ id, data: formData });
       setEditingVendor(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Error is handled by the mutation hook, but we can also handle it here as backup
       console.error("Vendor update error in handler:", error);
       const errorMessage =
-        error?.message ||
-        error?.response?.data?.message ||
+        (error as Error)?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to update vendor";
       toast.error(errorMessage);
     }
@@ -119,12 +126,12 @@ export default function VendorsPage() {
     if (window.confirm("Are you sure you want to delete this vendor?")) {
       try {
         await deleteVendorMutation.mutateAsync(id);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Error is handled by the mutation hook, but we can also handle it here as backup
         console.error("Vendor deletion error in handler:", error);
         const errorMessage =
-          error?.message ||
-          error?.response?.data?.message ||
+          (error as Error)?.message ||
+          (error as ExtendedError)?.response?.data?.message ||
           "Failed to delete vendor";
         toast.error(errorMessage);
       }
@@ -379,7 +386,7 @@ export default function VendorsPage() {
 
 // Vendor Form Component
 interface VendorFormProps {
-  initialData?: any;
+  initialData?: VendorDetails;
   onSubmit: (data: CreateVendorRequest | UpdateVendorRequest) => void;
   isLoading: boolean;
   onCancel: () => void;

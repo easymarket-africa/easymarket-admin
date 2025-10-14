@@ -38,7 +38,7 @@ import {
 } from "lucide-react";
 import { useAnalyticsOverview } from "@/hooks/use-analytics";
 import { StatsCardSkeleton } from "@/components/loading-states";
-import { ErrorDisplay, ErrorAlert } from "@/components/error-display";
+import { ErrorDisplay } from "@/components/error-display";
 
 export default function AnalyticsPage() {
   const [timeFilter, setTimeFilter] = useState("last_30_days");
@@ -50,24 +50,46 @@ export default function AnalyticsPage() {
     error: analyticsError,
     refetch: refetchAnalytics,
   } = useAnalyticsOverview({
-    timeFilter: timeFilter as any,
+    timeFilter: timeFilter as
+      | "last_7_days"
+      | "last_30_days"
+      | "last_90_days"
+      | "last_year",
   });
 
   const analytics = analyticsData || {
-    totalRevenue: 0,
-    totalOrders: 0,
-    activeAgents: 0,
-    averageDeliveryTime: 0,
-    revenueGrowth: { value: 0, percentageChange: 0, changeType: "increase" },
-    ordersGrowth: { value: 0, percentageChange: 0, changeType: "increase" },
-    agentsGrowth: { value: 0, percentageChange: 0, changeType: "increase" },
-    deliveryTimeGrowth: {
+    totalRevenue: {
       value: 0,
       percentageChange: 0,
-      changeType: "increase",
+      changeType: "increase" as const,
+      currency: "NGN",
     },
-    revenueTrends: [],
-    orderStatusDistribution: [],
+    totalOrders: {
+      value: 0,
+      percentageChange: 0,
+      changeType: "increase" as const,
+      period: "30 days",
+    },
+    activeAgents: {
+      value: 0,
+      percentageChange: 0,
+      changeType: "increase" as const,
+      period: "30 days",
+    },
+    averageDeliveryTime: {
+      value: 0,
+      percentageChange: 0,
+      changeType: "increase" as const,
+      unit: "minutes",
+      period: "30 days",
+    },
+    monthlyRevenue: { labels: [], data: [], currency: "NGN" },
+    orderDistribution: {
+      delivered: 0,
+      pending: 0,
+      cancelled: 0,
+      inProgress: 0,
+    },
     topAgents: [],
   };
 
@@ -118,15 +140,15 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  ₦{analytics.totalRevenue.toLocaleString()}
+                  ₦{analytics.totalRevenue.value.toLocaleString()}
                 </div>
                 <div className="flex items-center text-xs text-muted-foreground">
-                  {analytics.revenueGrowth.changeType === "increase" ? (
+                  {analytics.totalRevenue.changeType === "increase" ? (
                     <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
                   ) : (
                     <TrendingDown className="mr-1 h-3 w-3 text-red-500" />
                   )}
-                  {analytics.revenueGrowth.percentageChange}% from last period
+                  {analytics.totalRevenue.percentageChange}% from last period
                 </div>
               </CardContent>
             </Card>
@@ -139,15 +161,15 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {analytics.totalOrders}
+                  {analytics.totalOrders.value}
                 </div>
                 <div className="flex items-center text-xs text-muted-foreground">
-                  {analytics.ordersGrowth.changeType === "increase" ? (
+                  {analytics.totalOrders.changeType === "increase" ? (
                     <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
                   ) : (
                     <TrendingDown className="mr-1 h-3 w-3 text-red-500" />
                   )}
-                  {analytics.ordersGrowth.percentageChange}% from last period
+                  {analytics.totalOrders.percentageChange}% from last period
                 </div>
               </CardContent>
             </Card>
@@ -160,15 +182,15 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {analytics.activeAgents}
+                  {analytics.activeAgents.value}
                 </div>
                 <div className="flex items-center text-xs text-muted-foreground">
-                  {analytics.agentsGrowth.changeType === "increase" ? (
+                  {analytics.activeAgents.changeType === "increase" ? (
                     <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
                   ) : (
                     <TrendingDown className="mr-1 h-3 w-3 text-red-500" />
                   )}
-                  {analytics.agentsGrowth.percentageChange}% from last period
+                  {analytics.activeAgents.percentageChange}% from last period
                 </div>
               </CardContent>
             </Card>
@@ -181,15 +203,15 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {analytics.averageDeliveryTime} min
+                  {analytics.averageDeliveryTime.value} min
                 </div>
                 <div className="flex items-center text-xs text-muted-foreground">
-                  {analytics.deliveryTimeGrowth.changeType === "increase" ? (
+                  {analytics.averageDeliveryTime.changeType === "increase" ? (
                     <TrendingUp className="mr-1 h-3 w-3 text-red-500" />
                   ) : (
                     <TrendingDown className="mr-1 h-3 w-3 text-green-500" />
                   )}
-                  {analytics.deliveryTimeGrowth.percentageChange}% from last
+                  {analytics.averageDeliveryTime.percentageChange}% from last
                   period
                 </div>
               </CardContent>
@@ -212,7 +234,14 @@ export default function AnalyticsPage() {
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analytics.revenueTrends}>
+                <BarChart
+                  data={analytics.monthlyRevenue.data.map((value, index) => ({
+                    period:
+                      analytics.monthlyRevenue.labels[index] ||
+                      `Month ${index + 1}`,
+                    revenue: value,
+                  }))}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="period" />
                   <YAxis />
@@ -245,7 +274,12 @@ export default function AnalyticsPage() {
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={analytics.orderStatusDistribution}
+                      data={Object.entries(analytics.orderDistribution).map(
+                        ([key, value]) => ({
+                          name: key.charAt(0).toUpperCase() + key.slice(1),
+                          value: value,
+                        })
+                      )}
                       cx="50%"
                       cy="50%"
                       innerRadius={60}
@@ -253,9 +287,22 @@ export default function AnalyticsPage() {
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {analytics.orderStatusDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
+                      {Object.entries(analytics.orderDistribution).map(
+                        (_, index) => {
+                          const colors = [
+                            "#0088FE",
+                            "#00C49F",
+                            "#FFBB28",
+                            "#FF8042",
+                          ];
+                          return (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={colors[index % colors.length]}
+                            />
+                          );
+                        }
+                      )}
                     </Pie>
                     <Tooltip
                       formatter={(value) => [`${value}%`, "Percentage"]}
@@ -263,17 +310,29 @@ export default function AnalyticsPage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex flex-wrap gap-2 mt-4">
-                  {analytics.orderStatusDistribution.map((entry) => (
-                    <div key={entry.name} className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: entry.color }}
-                      />
-                      <span className="text-sm">
-                        {entry.name}: {entry.value}%
-                      </span>
-                    </div>
-                  ))}
+                  {Object.entries(analytics.orderDistribution).map(
+                    ([key, value], index) => {
+                      const colors = [
+                        "#0088FE",
+                        "#00C49F",
+                        "#FFBB28",
+                        "#FF8042",
+                      ];
+                      return (
+                        <div key={key} className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{
+                              backgroundColor: colors[index % colors.length],
+                            }}
+                          />
+                          <span className="text-sm">
+                            {key}: {value}%
+                          </span>
+                        </div>
+                      );
+                    }
+                  )}
                 </div>
               </>
             )}
@@ -313,7 +372,7 @@ export default function AnalyticsPage() {
                     <div>
                       <div className="font-medium">{agent.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        {agent.ordersCompleted} orders completed
+                        {agent.completedOrders} orders completed
                       </div>
                     </div>
                   </div>

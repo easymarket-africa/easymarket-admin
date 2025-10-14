@@ -5,6 +5,8 @@ import {
   UpdateWhatsAppGroupRequest,
   SendWhatsAppMessageRequest,
   SendWhatsAppMessageResponse,
+  WhatsAppMessage,
+  MessageStatus,
 } from "@/types/api";
 
 /**
@@ -66,11 +68,15 @@ export class WhatsAppService {
   async getGroupMessages(
     groupId: number,
     filters: { page?: number; limit?: number } = {}
-  ): Promise<any> {
+  ): Promise<WhatsAppMessage[]> {
     const params = new URLSearchParams();
 
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
+      if (
+        value !== undefined &&
+        value !== null &&
+        (typeof value === "string" ? value !== "" : value !== 0)
+      ) {
         params.append(key, value.toString());
       }
     });
@@ -80,14 +86,16 @@ export class WhatsAppService {
       ? `${this.basePath}/groups/${groupId}/messages?${queryString}`
       : `${this.basePath}/groups/${groupId}/messages`;
 
-    return apiClient.get<any>(url);
+    return apiClient.get<WhatsAppMessage[]>(url);
   }
 
   /**
    * Get message delivery status
    */
-  async getMessageStatus(messageId: string): Promise<any> {
-    return apiClient.get<any>(`${this.basePath}/messages/${messageId}/status`);
+  async getMessageStatus(messageId: string): Promise<MessageStatus> {
+    return apiClient.get<MessageStatus>(
+      `${this.basePath}/messages/${messageId}/status`
+    );
   }
 }
 

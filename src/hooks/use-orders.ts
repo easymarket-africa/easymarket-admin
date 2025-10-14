@@ -82,7 +82,7 @@ export function useUpdateOrderStatus() {
 
       toast.success("Order status updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update order status");
     },
   });
@@ -115,7 +115,7 @@ export function useAssignAgent() {
 
       toast.success(`Agent ${assignedAgent.fullName} assigned successfully`);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to assign agent");
     },
   });
@@ -144,7 +144,7 @@ export function useCancelOrder() {
 
       toast.success("Order cancelled successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to cancel order");
     },
   });
@@ -178,7 +178,7 @@ export function useUpdatePaymentStatus() {
 
       toast.success("Payment status updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update payment status");
     },
   });
@@ -212,7 +212,7 @@ export function useProcessRefund() {
 
       toast.success("Refund processed successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to process refund");
     },
   });
@@ -241,7 +241,7 @@ export function useUpdateDeliveryAddress() {
 
       toast.success("Delivery address updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update delivery address");
     },
   });
@@ -270,7 +270,7 @@ export function useUpdateCustomerInfo() {
 
       toast.success("Customer information updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update customer information");
     },
   });

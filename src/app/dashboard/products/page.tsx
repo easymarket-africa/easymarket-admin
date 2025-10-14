@@ -41,8 +41,8 @@ import {
   Download,
   Package,
   DollarSign,
-  Eye,
-  EyeOff,
+  // Eye, // Unused
+  // EyeOff, // Unused
 } from "lucide-react";
 import {
   useProducts,
@@ -60,6 +60,8 @@ import {
   Product,
   CreateProductRequest,
   UpdateProductRequest,
+  VendorDetails,
+  ExtendedError,
 } from "@/types/api";
 
 // Default product image
@@ -110,7 +112,7 @@ export default function ProductsPage() {
   const deleteProductMutation = useDeleteProduct();
   const bulkUploadMutation = useBulkUploadProducts();
 
-  const products = (productsData as any)?.products || [];
+  const products = productsData?.products || [];
   const metrics = metricsData || {
     totalProducts: 0,
     activeProducts: 0,
@@ -124,12 +126,12 @@ export default function ProductsPage() {
     try {
       await createProductMutation.mutateAsync(formData);
       setIsAddModalOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Error is handled by the mutation hook, but we can also handle it here as backup
       console.error("Product creation error in handler:", error);
       const errorMessage =
-        error?.message ||
-        error?.response?.data?.message ||
+        (error as Error)?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to create product";
       toast.error(errorMessage);
     }
@@ -142,12 +144,12 @@ export default function ProductsPage() {
     try {
       await updateProductMutation.mutateAsync({ id, data: formData });
       setEditingProduct(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Error is handled by the mutation hook, but we can also handle it here as backup
       console.error("Product update error in handler:", error);
       const errorMessage =
-        error?.message ||
-        error?.response?.data?.message ||
+        (error as Error)?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to update product";
       toast.error(errorMessage);
     }
@@ -157,12 +159,12 @@ export default function ProductsPage() {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
         await deleteProductMutation.mutateAsync(id);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Error is handled by the mutation hook, but we can also handle it here as backup
         console.error("Product deletion error in handler:", error);
         const errorMessage =
-          error?.message ||
-          error?.response?.data?.message ||
+          (error as Error)?.message ||
+          (error as ExtendedError)?.response?.data?.message ||
           "Failed to delete product";
         toast.error(errorMessage);
       }
@@ -173,12 +175,12 @@ export default function ProductsPage() {
     try {
       await bulkUploadMutation.mutateAsync(file);
       setIsExcelModalOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Error is handled by the mutation hook, but we can also handle it here as backup
       console.error("Product bulk upload error in handler:", error);
       const errorMessage =
-        error?.message ||
-        error?.response?.data?.message ||
+        (error as Error)?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to upload products";
       toast.error(errorMessage);
     }
@@ -410,7 +412,7 @@ export default function ProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.map((product: any) => (
+                {products.map((product: Product) => (
                   <TableRow key={product.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -523,7 +525,7 @@ export default function ProductsPage() {
 interface ProductFormProps {
   initialData?: Product;
   categories: string[];
-  vendors: any[];
+  vendors: VendorDetails[];
   onSubmit: (data: CreateProductRequest | UpdateProductRequest) => void;
   isLoading: boolean;
   onCancel: () => void;
@@ -625,7 +627,7 @@ function ProductForm({
             <SelectContent>
               {vendors.map((vendor) => (
                 <SelectItem key={vendor.id} value={vendor.id.toString()}>
-                  {vendor.name}
+                  {vendor.businessName}
                 </SelectItem>
               ))}
             </SelectContent>

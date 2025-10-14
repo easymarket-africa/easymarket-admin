@@ -91,22 +91,21 @@ Please confirm receipt and update status accordingly.`;
     if (!selectedGroup) return;
 
     let phoneNumber = "";
-    let recipientName = "";
+    // let _recipientName = ""; // Unused
 
     // Check if it's an agent (starts with "agent-")
     if (selectedGroup.startsWith("agent-")) {
-      const agentId = selectedGroup.replace("agent-", "");
       const agent = order.assignedAgent;
       if (agent) {
         phoneNumber = agent.phoneNumber.replace(/\s+/g, "");
-        recipientName = agent.name;
+        // _recipientName = agent.name; // Unused
       }
     } else {
       // It's a group
       const group = agentGroups.find((g) => g.id === selectedGroup);
       if (group) {
         phoneNumber = group.phone.replace(/\s+/g, "");
-        recipientName = group.name;
+        // _recipientName = group.name; // Unused
       }
     }
 

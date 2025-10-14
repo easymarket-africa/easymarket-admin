@@ -37,7 +37,7 @@ export function useUpdateGeneralSettings() {
       queryClient.setQueryData(queryKeys.settings.general(), updatedSettings);
       toast.success("General settings updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update general settings");
     },
   });
@@ -65,7 +65,7 @@ export function useUpdateNotificationSettings() {
       );
       toast.success("Notification settings updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update notification settings");
     },
   });
@@ -90,7 +90,7 @@ export function useUpdateSecuritySettings() {
       queryClient.setQueryData(queryKeys.settings.security(), updatedSettings);
       toast.success("Security settings updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update security settings");
     },
   });
@@ -118,7 +118,7 @@ export function useUpdateIntegrationSettings() {
       );
       toast.success("Integration settings updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update integration settings");
     },
   });
@@ -143,7 +143,7 @@ export function useUpdateBillingSettings() {
       queryClient.setQueryData(queryKeys.settings.billing(), updatedSettings);
       toast.success("Billing settings updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update billing settings");
     },
   });
@@ -166,7 +166,7 @@ export function useCreateBackup() {
         `Backup created successfully. Backup ID: ${result.backupId}`
       );
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to create backup");
     },
   });
@@ -194,7 +194,7 @@ export function useToggleMaintenanceMode() {
         : "Maintenance mode disabled";
       toast.success(message);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to toggle maintenance mode");
     },
   });

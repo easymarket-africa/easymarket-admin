@@ -65,7 +65,7 @@ axiosInstance.interceptors.response.use(
           // Retry the original request with new token
           originalRequest.headers.Authorization = `Bearer ${response.accessToken}`;
           return axiosInstance(originalRequest);
-        } catch (refreshError) {
+        } catch {
           // Refresh failed, clear tokens and redirect to login
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
@@ -107,7 +107,7 @@ export class ApiClient {
 
   async post<T>(
     url: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<T> {
     const response = await this.client.post<T>(url, data, config);
@@ -116,7 +116,7 @@ export class ApiClient {
 
   async put<T>(
     url: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<T> {
     const response = await this.client.put<T>(url, data, config);
@@ -125,7 +125,7 @@ export class ApiClient {
 
   async patch<T>(
     url: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<T> {
     const response = await this.client.patch<T>(url, data, config);

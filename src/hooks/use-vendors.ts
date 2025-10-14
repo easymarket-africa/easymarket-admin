@@ -8,6 +8,7 @@ import {
   VendorFilters,
   CreateVendorRequest,
   UpdateVendorRequest,
+  ExtendedError,
 } from "@/types/api";
 import { toast } from "sonner";
 
@@ -84,7 +85,7 @@ export function useCreateVendor() {
   return useMutation({
     mutationFn: (data: CreateVendorRequest) =>
       vendorsService.createVendor(data),
-    onSuccess: (newVendor: VendorDetails) => {
+    onSuccess: () => {
       // Invalidate vendors list to refresh
       queryClient.invalidateQueries({
         queryKey: queryKeys.vendors.lists(),
@@ -97,11 +98,11 @@ export function useCreateVendor() {
 
       toast.success("Vendor created successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Vendor creation error:", error);
       const errorMessage =
         error?.message ||
-        error?.response?.data?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to create vendor";
       toast.error(errorMessage);
     },
@@ -136,11 +137,11 @@ export function useUpdateVendor() {
 
       toast.success("Vendor updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Vendor update error:", error);
       const errorMessage =
         error?.message ||
-        error?.response?.data?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to update vendor";
       toast.error(errorMessage);
     },
@@ -178,11 +179,11 @@ export function useDeleteVendor() {
 
       toast.success("Vendor deleted successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Vendor deletion error:", error);
       const errorMessage =
         error?.message ||
-        error?.response?.data?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to delete vendor";
       toast.error(errorMessage);
     },
@@ -216,11 +217,11 @@ export function useApproveVendor() {
 
       toast.success("Vendor approved successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Vendor approval error:", error);
       const errorMessage =
         error?.message ||
-        error?.response?.data?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to approve vendor";
       toast.error(errorMessage);
     },
@@ -260,11 +261,11 @@ export function useSuspendVendor() {
 
       toast.success("Vendor suspended successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Vendor suspension error:", error);
       const errorMessage =
         error?.message ||
-        error?.response?.data?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to suspend vendor";
       toast.error(errorMessage);
     },

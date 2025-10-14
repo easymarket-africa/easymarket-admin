@@ -49,8 +49,25 @@ export interface ProductsResponse {
 export interface ApiError {
   message: string;
   code?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   requiresVerification?: boolean;
+}
+
+export interface ApiErrorResponse {
+  message: string;
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
+
+export interface ExtendedError extends Error {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
 }
 
 // Authentication Types
@@ -221,6 +238,7 @@ export interface OrderFilters {
   customerId?: number;
   startDate?: string;
   endDate?: string;
+  [key: string]: unknown;
 }
 
 export interface UpdateOrderStatusRequest {
@@ -270,6 +288,7 @@ export interface ProductFilters {
   category?: string;
   status?: string;
   vendorId?: number;
+  [key: string]: unknown;
 }
 
 export interface ProductMetrics {
@@ -350,6 +369,7 @@ export interface AgentFilters {
   limit?: number;
   search?: string;
   status?: string;
+  [key: string]: unknown;
 }
 
 export interface AgentMetrics {
@@ -411,6 +431,7 @@ export interface VendorFilters {
   search?: string;
   category?: string;
   status?: string;
+  [key: string]: unknown;
 }
 
 export interface VendorMetrics {
@@ -500,6 +521,75 @@ export interface AnalyticsOverview {
 
 export interface AnalyticsFilters {
   timeFilter?: "last_7_days" | "last_30_days" | "last_90_days" | "last_year";
+  [key: string]: unknown;
+}
+
+export interface RevenueTrends {
+  labels: string[];
+  data: number[];
+  currency: string;
+  period: string;
+}
+
+export interface OrderTrends {
+  labels: string[];
+  data: number[];
+  period: string;
+}
+
+export interface AgentPerformance {
+  agentId: number;
+  agentName: string;
+  completedOrders: number;
+  averageRating: number;
+  totalRevenue: number;
+  period: string;
+}
+
+export interface ProductPerformance {
+  productId: number;
+  productName: string;
+  totalSales: number;
+  totalRevenue: number;
+  averageRating: number;
+  period: string;
+}
+
+export interface OrderHistoryEntry {
+  id: number;
+  orderId: number;
+  action: string;
+  description: string;
+  performedBy: string;
+  performedAt: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ProductHistoryEntry {
+  id: number;
+  productId: number;
+  action: string;
+  description: string;
+  performedBy: string;
+  performedAt: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface BackupSettings {
+  enabled: boolean;
+  frequency: string;
+  retentionDays: number;
+  lastBackupAt?: string;
+  nextBackupAt?: string;
+}
+
+export interface SystemLog {
+  id: number;
+  level: string;
+  message: string;
+  timestamp: string;
+  source: string;
+  metadata?: Record<string, unknown>;
 }
 
 // Settings Types
@@ -640,4 +730,25 @@ export interface SendWhatsAppMessageRequest {
 export interface SendWhatsAppMessageResponse {
   message: string;
   messageId: string;
+}
+
+export interface WhatsAppMessage {
+  id: string;
+  groupId: number;
+  message: string;
+  messageType: string;
+  priority: string;
+  status: string;
+  sentAt: string;
+  deliveredAt?: string;
+  readAt?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface MessageStatus {
+  messageId: string;
+  status: string;
+  deliveredAt?: string;
+  readAt?: string;
+  errorMessage?: string;
 }

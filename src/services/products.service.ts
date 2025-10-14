@@ -3,11 +3,11 @@ import {
   Product,
   ProductFilters,
   ProductMetrics,
-  PaginatedResponse,
   ProductsResponse,
   CreateProductRequest,
   UpdateProductRequest,
   BulkUploadResponse,
+  ProductHistoryEntry,
 } from "@/types/api";
 
 /**
@@ -87,8 +87,10 @@ export class ProductsService {
   /**
    * Get product change history
    */
-  async getProductHistory(id: number): Promise<any[]> {
-    return apiClient.get<any[]>(`${this.basePath}/${id}/history`);
+  async getProductHistory(id: number): Promise<ProductHistoryEntry[]> {
+    return apiClient.get<ProductHistoryEntry[]>(
+      `${this.basePath}/${id}/history`
+    );
   }
 
   /**

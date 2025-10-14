@@ -33,7 +33,10 @@ export function ErrorDisplay({
         error.response &&
         typeof error.response === "object"
       ) {
-        const response = error.response as any;
+        const response = error.response as {
+          data?: { message?: string };
+          message?: string;
+        };
         return (
           response.data?.message || response.message || "An error occurred"
         );
@@ -52,8 +55,11 @@ export function ErrorDisplay({
         error.response &&
         typeof error.response === "object"
       ) {
-        const response = error.response as any;
-        return response.status?.toString() || response.data?.code;
+        const response = error.response as {
+          data?: { message?: string; code?: string };
+          message?: string;
+        };
+        return response.data?.code;
       }
     }
     return undefined;
@@ -132,7 +138,10 @@ export function ErrorAlert({
         error.response &&
         typeof error.response === "object"
       ) {
-        const response = error.response as any;
+        const response = error.response as {
+          data?: { message?: string };
+          message?: string;
+        };
         return (
           response.data?.message || response.message || "An error occurred"
         );

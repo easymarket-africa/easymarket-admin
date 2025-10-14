@@ -33,7 +33,11 @@ import {
 } from "@/hooks/use-agents";
 import { TableSkeleton, StatsCardSkeleton } from "@/components/loading-states";
 import { ErrorDisplay, ErrorAlert } from "@/components/error-display";
-import { CreateAgentRequest, UpdateAgentRequest } from "@/types/api";
+import {
+  CreateAgentRequest,
+  UpdateAgentRequest,
+  AgentDetails,
+} from "@/types/api";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -62,7 +66,7 @@ const formatRating = (rating: string | number): string => {
 export default function AgentsPageIntegrated() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingAgent, setEditingAgent] = useState<any>(null);
+  const [editingAgent, setEditingAgent] = useState<AgentDetails | null>(null);
 
   // API hooks
   const {
@@ -96,12 +100,13 @@ export default function AgentsPageIntegrated() {
     try {
       await createAgentMutation.mutateAsync(formData);
       setIsAddModalOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Error is handled by the mutation hook, but we can also handle it here as backup
       console.error("Agent creation error in handler:", error);
       const errorMessage =
-        error?.message ||
-        error?.response?.data?.message ||
+        (error as Error)?.message ||
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message ||
         "Failed to create agent";
       toast.error(errorMessage);
     }
@@ -114,12 +119,13 @@ export default function AgentsPageIntegrated() {
     try {
       await updateAgentMutation.mutateAsync({ id, data: formData });
       setEditingAgent(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Error is handled by the mutation hook, but we can also handle it here as backup
       console.error("Agent update error in handler:", error);
       const errorMessage =
-        error?.message ||
-        error?.response?.data?.message ||
+        (error as Error)?.message ||
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message ||
         "Failed to update agent";
       toast.error(errorMessage);
     }
@@ -132,12 +138,13 @@ export default function AgentsPageIntegrated() {
     ) {
       try {
         await deleteAgentMutation.mutateAsync(id);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Error is handled by the mutation hook, but we can also handle it here as backup
         console.error("Agent deletion error in handler:", error);
         const errorMessage =
-          error?.message ||
-          error?.response?.data?.message ||
+          (error as Error)?.message ||
+          (error as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message ||
           "Failed to delete agent";
         toast.error(errorMessage);
       }
@@ -422,7 +429,7 @@ export default function AgentsPageIntegrated() {
 
 // Agent Form Component
 interface AgentFormProps {
-  initialData?: any;
+  initialData?: AgentDetails;
   onSubmit: (data: CreateAgentRequest | UpdateAgentRequest) => void;
   isLoading: boolean;
   onCancel: () => void;

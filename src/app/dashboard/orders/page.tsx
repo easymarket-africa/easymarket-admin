@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge"; // Unused
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,29 +44,29 @@ import {
 } from "@/hooks/use-orders";
 import { useAvailableAgents } from "@/hooks/use-agents";
 import { TableSkeleton } from "@/components/loading-states";
-import { ErrorDisplay, ErrorAlert } from "@/components/error-display";
+import { ErrorDisplay } from "@/components/error-display";
 import { Order } from "@/types/api";
 
-const getStatusColor = (status: Order["status"]) => {
-  switch (status) {
-    case "pending":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-    case "confirmed":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-    case "preparing":
-      return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
-    case "ready_for_delivery":
-      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
-    case "on_the_way":
-      return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300";
-    case "delivered":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-    case "cancelled":
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-  }
-};
+// const getStatusColor = (status: Order["status"]) => { // Unused
+//   switch (status) {
+//     case "pending":
+//       return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+//     case "confirmed":
+//       return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+//     case "preparing":
+//       return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
+//     case "ready_for_delivery":
+//       return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
+//     case "on_the_way":
+//       return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300";
+//     case "delivered":
+//       return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+//     case "cancelled":
+//       return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+//     default:
+//       return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+//   }
+// };
 
 export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -92,7 +92,7 @@ export default function OrdersPage() {
   const updateStatusMutation = useUpdateOrderStatus();
   const updatePaymentStatusMutation = useUpdatePaymentStatus();
 
-  const orders = (ordersData as any)?.orders || [];
+  const orders = ordersData?.orders || [];
   const agents = Array.isArray(agentsData?.agents) ? agentsData.agents : [];
 
   const handleAssignAgent = async (orderId: number, agentId: number) => {
@@ -101,7 +101,7 @@ export default function OrdersPage() {
         id: orderId,
         data: { agentId: agentId },
       });
-    } catch (error) {
+    } catch {
       // Error is handled by the mutation hook
     }
   };

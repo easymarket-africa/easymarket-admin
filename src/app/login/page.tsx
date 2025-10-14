@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation"; // Unused
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,7 @@ import Link from "next/link";
 import { useLogin } from "@/hooks/use-auth";
 
 export default function LoginPage() {
-  const router = useRouter();
+  // const router = useRouter(); // Unused for now
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -60,7 +60,7 @@ export default function LoginPage() {
     loginMutation.mutate(
       { email, password },
       {
-        onError: (error: any) => {
+        onError: (error: Error & { requiresVerification?: boolean }) => {
           setError(error.message || "Login failed");
         },
       }

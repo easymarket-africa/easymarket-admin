@@ -75,7 +75,10 @@ export function useLogin() {
       // Redirect to dashboard
       router.push("/dashboard");
     },
-    onError: (error: any, variables: LoginRequest) => {
+    onError: (
+      error: Error & { requiresVerification?: boolean },
+      variables: LoginRequest
+    ) => {
       // Debug logging
       console.log("Login error:", error);
       console.log("requiresVerification:", error.requiresVerification);
@@ -119,7 +122,7 @@ export function useLogout() {
       // Redirect to login
       router.push("/login");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       // Even if logout fails on server, clear local data
       tokenManager.clearTokens();
       queryClient.clear();
@@ -139,7 +142,7 @@ export function useChangePassword() {
     onSuccess: () => {
       toast.success("Password changed successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to change password");
     },
   });
@@ -162,7 +165,7 @@ export function useUpdateProfile() {
 
       toast.success("Profile updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update profile");
     },
   });
@@ -178,7 +181,7 @@ export function useRequestPasswordReset() {
     onSuccess: () => {
       toast.success("Password reset code sent to your email");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to send reset code");
     },
   });
@@ -196,7 +199,7 @@ export function useResetPassword() {
       toast.success("Password reset successfully");
       router.push("/login");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to reset password");
     },
   });
@@ -273,7 +276,7 @@ export function useVerifyEmail() {
       // Redirect to dashboard
       router.push("/dashboard");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Email verification failed");
     },
   });
@@ -289,7 +292,7 @@ export function useResendVerification() {
     onSuccess: () => {
       toast.success("Verification email sent!");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to send verification email");
     },
   });

@@ -72,7 +72,7 @@ export default function VerifyEmailPage() {
     verifyEmailMutation.mutate(
       { email: pendingEmail, code: verificationCode },
       {
-        onError: (error: any) => {
+        onError: (error: Error) => {
           setError(error.message || "Verification failed");
         },
       }
@@ -88,7 +88,7 @@ export default function VerifyEmailPage() {
         onSuccess: () => {
           setResendCooldown(60); // 60 second cooldown
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
           setError(error.message || "Failed to resend verification code");
         },
       }
@@ -121,7 +121,7 @@ export default function VerifyEmailPage() {
               Verify Your Email
             </CardTitle>
             <CardDescription className="text-muted-foreground">
-              We've sent a 6-digit verification code to{" "}
+              We&apos;ve sent a 6-digit verification code to{" "}
               <span className="font-medium text-foreground">
                 {pendingEmail}
               </span>
@@ -199,7 +199,7 @@ export default function VerifyEmailPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground">
-                  Didn't receive the code?
+                  Didn&apos;t receive the code?
                 </span>
               </div>
             </div>
@@ -235,8 +235,8 @@ export default function VerifyEmailPage() {
           {/* Help Text */}
           <div className="text-center text-sm text-muted-foreground">
             <p>
-              The verification code expires in 15 minutes. If you don't see the
-              email, check your spam folder or try resending the code.
+              The verification code expires in 15 minutes. If you don&apos;t see
+              the email, check your spam folder or try resending the code.
             </p>
           </div>
         </CardContent>

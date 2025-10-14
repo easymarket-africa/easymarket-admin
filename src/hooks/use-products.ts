@@ -8,6 +8,7 @@ import {
   ProductFilters,
   CreateProductRequest,
   UpdateProductRequest,
+  ExtendedError,
 } from "@/types/api";
 import { toast } from "sonner";
 
@@ -83,7 +84,7 @@ export function useCreateProduct() {
   return useMutation({
     mutationFn: (data: CreateProductRequest) =>
       productsService.createProduct(data),
-    onSuccess: (newProduct: Product) => {
+    onSuccess: () => {
       // Invalidate products list to refresh
       queryClient.invalidateQueries({
         queryKey: queryKeys.products.lists(),
@@ -101,11 +102,11 @@ export function useCreateProduct() {
 
       toast.success("Product created successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Product creation error:", error);
       const errorMessage =
         error?.message ||
-        error?.response?.data?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to create product";
       toast.error(errorMessage);
     },
@@ -140,11 +141,11 @@ export function useUpdateProduct() {
 
       toast.success("Product updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Product update error:", error);
       const errorMessage =
         error?.message ||
-        error?.response?.data?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to update product";
       toast.error(errorMessage);
     },
@@ -182,11 +183,11 @@ export function useDeleteProduct() {
 
       toast.success("Product deleted successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Product deletion error:", error);
       const errorMessage =
         error?.message ||
-        error?.response?.data?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to delete product";
       toast.error(errorMessage);
     },
@@ -225,11 +226,11 @@ export function useBulkUploadProducts() {
         toast.success(`Successfully uploaded ${result.successCount} products`);
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Product bulk upload error:", error);
       const errorMessage =
         error?.message ||
-        error?.response?.data?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to upload products";
       toast.error(errorMessage);
     },
@@ -244,7 +245,7 @@ export function useDuplicateProduct() {
 
   return useMutation({
     mutationFn: (id: number) => productsService.duplicateProduct(id),
-    onSuccess: (newProduct: Product) => {
+    onSuccess: () => {
       // Invalidate products list to refresh
       queryClient.invalidateQueries({
         queryKey: queryKeys.products.lists(),
@@ -257,11 +258,11 @@ export function useDuplicateProduct() {
 
       toast.success("Product duplicated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Product duplication error:", error);
       const errorMessage =
         error?.message ||
-        error?.response?.data?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to duplicate product";
       toast.error(errorMessage);
     },
@@ -296,11 +297,11 @@ export function useUpdateStock() {
 
       toast.success("Stock quantity updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Stock update error:", error);
       const errorMessage =
         error?.message ||
-        error?.response?.data?.message ||
+        (error as ExtendedError)?.response?.data?.message ||
         "Failed to update stock quantity";
       toast.error(errorMessage);
     },
