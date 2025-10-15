@@ -47,8 +47,13 @@ axiosInstance.interceptors.response.use(
     };
 
     // Handle specific HTTP status codes
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      originalRequest._retryCount < 2
+    ) {
       originalRequest._retry = true;
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
 
       const refreshToken = localStorage.getItem("refresh_token");
 
@@ -65,7 +70,8 @@ axiosInstance.interceptors.response.use(
           // Retry the original request with new token
           originalRequest.headers.Authorization = `Bearer ${response.accessToken}`;
           return axiosInstance(originalRequest);
-        } catch {
+        } catch (refreshError) {
+          console.error("Token refresh failed:", refreshError);
           // Refresh failed, clear tokens and redirect to login
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");

@@ -44,6 +44,7 @@ export class AuthService {
    * Refresh admin access token using refresh token
    */
   async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    // Backend expects refreshToken as a direct field, not in an object
     return apiClient.post<RefreshTokenResponse>(`${this.basePath}/refresh`, {
       refreshToken,
     });

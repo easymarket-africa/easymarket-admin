@@ -1,0 +1,261 @@
+import { io, Socket } from "socket.io-client";
+
+export interface WebSocketMessage {
+  id: string;
+  type: "order" | "notification" | "chat" | "broadcast";
+  data: any;
+  timestamp: string;
+}
+
+export interface OrderUpdateData {
+  orderId: number;
+  orderNumber: string;
+  userId: number;
+  status: string;
+  paymentStatus?: string;
+  message: string;
+  timestamp: Date;
+  metadata?: {
+    agentId?: number;
+    agentName?: string;
+    estimatedDeliveryTime?: Date;
+    actualDeliveryTime?: Date;
+    trackingInfo?: any;
+    cancellationReason?: string;
+  };
+}
+
+export interface NotificationData {
+  title: string;
+  message: string;
+  type?: string;
+}
+
+export interface ChatData {
+  message: string;
+  senderId: number;
+  senderName: string;
+  chatId?: string;
+}
+
+class WebSocketService {
+  private socket: Socket | null = null;
+  private isConnected = false;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectInterval = 1000;
+  private eventListeners: Map<string, Function[]> = new Map();
+
+  constructor() {
+    this.setupEventListeners();
+  }
+
+  private setupEventListeners() {
+    // Connection events
+    this.addEventListener("connect", () => {
+      console.log("🔌 WebSocket connected");
+      this.isConnected = true;
+      this.reconnectAttempts = 0;
+    });
+
+    this.addEventListener("disconnect", (reason: string) => {
+      console.log("🔌 WebSocket disconnected:", reason);
+      this.isConnected = false;
+      this.handleReconnection();
+    });
+
+    this.addEventListener("connect_error", (error: Error) => {
+      console.error("❌ WebSocket connection error:", error);
+      this.handleReconnection();
+    });
+
+    // Message events
+    this.addEventListener("order", (data: WebSocketMessage) => {
+      console.log("📦 Order update received:", data);
+    });
+
+    this.addEventListener("notification", (data: WebSocketMessage) => {
+      console.log("🔔 Notification received:", data);
+    });
+
+    this.addEventListener("chat", (data: WebSocketMessage) => {
+      console.log("💬 Chat message received:", data);
+    });
+
+    this.addEventListener("broadcast", (data: WebSocketMessage) => {
+      console.log("📢 Broadcast received:", data);
+    });
+
+    this.addEventListener("connected", (data: any) => {
+      console.log("✅ Connection confirmed:", data);
+    });
+
+    this.addEventListener("error", (data: any) => {
+      console.error("❌ WebSocket error:", data);
+    });
+  }
+
+  private handleReconnection() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      const delay =
+        this.reconnectInterval * Math.pow(2, this.reconnectAttempts - 1);
+
+      console.log(
+        `🔄 Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms`
+      );
+
+      setTimeout(() => {
+        if (this.socket && !this.isConnected) {
+          this.socket.connect();
+        }
+      }, delay);
+    } else {
+      console.error("❌ Max reconnection attempts reached");
+    }
+  }
+
+  connect(
+    token: string,
+    serverUrl: string = process.env.NEXT_PUBLIC_WEBSOCKET_URL ||
+      "http://localhost:3001"
+  ) {
+    if (this.socket && this.isConnected) {
+      console.log("🔌 Already connected to WebSocket");
+      return;
+    }
+
+    console.log("🔌 Connecting to WebSocket server...");
+
+    this.socket = io(serverUrl, {
+      auth: {
+        token: token,
+      },
+      transports: ["websocket", "polling"],
+      forceNew: true,
+    });
+
+    // Set up socket event listeners
+    this.socket.on("connect", () => {
+      this.emit("connect");
+    });
+
+    this.socket.on("disconnect", (reason: string) => {
+      this.emit("disconnect", reason);
+    });
+
+    this.socket.on("connect_error", (error: Error) => {
+      this.emit("connect_error", error);
+    });
+
+    this.socket.on("order", (data: WebSocketMessage) => {
+      this.emit("order", data);
+    });
+
+    this.socket.on("notification", (data: WebSocketMessage) => {
+      this.emit("notification", data);
+    });
+
+    this.socket.on("chat", (data: WebSocketMessage) => {
+      this.emit("chat", data);
+    });
+
+    this.socket.on("broadcast", (data: WebSocketMessage) => {
+      this.emit("broadcast", data);
+    });
+
+    this.socket.on("connected", (data: any) => {
+      this.emit("connected", data);
+    });
+
+    this.socket.on("error", (data: any) => {
+      this.emit("error", data);
+    });
+
+    this.socket.on("pong", (data: any) => {
+      console.log("🏓 Pong received:", data);
+    });
+  }
+
+  disconnect() {
+    if (this.socket) {
+      console.log("🔌 Disconnecting from WebSocket...");
+      this.socket.disconnect();
+      this.socket = null;
+      this.isConnected = false;
+    }
+  }
+
+  // Send methods for admin actions
+  sendPing() {
+    if (this.socket && this.isConnected) {
+      this.socket.emit("ping");
+    }
+  }
+
+  joinRoom(roomName: string) {
+    if (this.socket && this.isConnected) {
+      this.socket.emit("join_room", { room: roomName });
+    }
+  }
+
+  leaveRoom(roomName: string) {
+    if (this.socket && this.isConnected) {
+      this.socket.emit("leave_room", { room: roomName });
+    }
+  }
+
+  sendAdminBroadcast(event: string, message: any) {
+    if (this.socket && this.isConnected) {
+      this.socket.emit("admin_broadcast", { event, message });
+    }
+  }
+
+  sendToUser(userId: number, event: string, message: any) {
+    if (this.socket && this.isConnected) {
+      this.socket.emit("admin_send_to_user", { userId, event, message });
+    }
+  }
+
+  // Event listener management
+  addEventListener(event: string, callback: Function) {
+    if (!this.eventListeners.has(event)) {
+      this.eventListeners.set(event, []);
+    }
+    this.eventListeners.get(event)!.push(callback);
+  }
+
+  removeEventListener(event: string, callback: Function) {
+    const listeners = this.eventListeners.get(event);
+    if (listeners) {
+      const index = listeners.indexOf(callback);
+      if (index > -1) {
+        listeners.splice(index, 1);
+      }
+    }
+  }
+
+  private emit(event: string, data?: any) {
+    const listeners = this.eventListeners.get(event);
+    if (listeners) {
+      listeners.forEach((callback) => callback(data));
+    }
+  }
+
+  // Getters
+  get connected(): boolean {
+    return this.isConnected;
+  }
+
+  get socketId(): string | undefined {
+    return this.socket?.id;
+  }
+
+  get transport(): string | undefined {
+    return this.socket?.io.engine.transport.name;
+  }
+}
+
+// Export singleton instance
+export const webSocketService = new WebSocketService();
+export default webSocketService;

@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { WebSocketStatus } from "@/components/websocket-status";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -177,6 +178,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
+        <div className="p-2">
+          <WebSocketStatus />
+        </div>
         <SidebarMenu>
           <SidebarMenuItem>
             <AlertDialog>

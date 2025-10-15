@@ -36,7 +36,9 @@ import {
   Save,
   AlertTriangle,
   Plus,
+  Wifi,
 } from "lucide-react";
+import { AdminNotifications } from "@/components/admin-notifications";
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState({
@@ -58,9 +60,10 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="general" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="websocket">WebSocket</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
@@ -216,6 +219,23 @@ export default function SettingsPage() {
                 <Save className="mr-2 h-4 w-4" />
                 Save Preferences
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="websocket" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wifi className="h-5 w-5" />
+                WebSocket Real-time Communication
+              </CardTitle>
+              <CardDescription>
+                Test and manage real-time notifications and order updates
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AdminNotifications />
             </CardContent>
           </Card>
         </TabsContent>

@@ -235,6 +235,19 @@ export function useIsAuthenticated() {
 }
 
 /**
+ * Hook to get authentication state and token
+ */
+export function useAuth() {
+  const isAuthenticated = useIsAuthenticated();
+  const token = tokenManager.getAccessToken();
+
+  return {
+    isAuthenticated,
+    token,
+  };
+}
+
+/**
  * Hook to get stored admin data
  */
 export function useStoredAdminData(): Admin | null {
