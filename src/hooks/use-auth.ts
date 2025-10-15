@@ -9,15 +9,15 @@ import { tokenManager } from "@/lib/api-client";
 const safeLocalStorage = {
   getItem: (key: string): string | null => {
     if (typeof window === "undefined") return null;
-    return safeLocalStorage.getItem(key);
+    return localStorage.getItem(key);
   },
   setItem: (key: string, value: string): void => {
     if (typeof window === "undefined") return;
-    safeLocalStorage.setItem(key, value);
+    localStorage.setItem(key, value);
   },
   removeItem: (key: string): void => {
     if (typeof window === "undefined") return;
-    safeLocalStorage.removeItem(key);
+    localStorage.removeItem(key);
   },
 };
 import {
