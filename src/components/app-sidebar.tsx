@@ -126,7 +126,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       // Even if logout API fails, clear local data and redirect
       // This ensures user is logged out on the frontend
-      localStorage.clear();
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+      }
       sessionStorage.clear();
 
       // Optional: Show error message

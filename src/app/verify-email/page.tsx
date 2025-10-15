@@ -99,7 +99,9 @@ export default function VerifyEmailPage() {
   };
 
   const handleBackToLogin = () => {
-    localStorage.removeItem("pending_verification_email");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("pending_verification_email");
+    }
     router.push("/login");
   };
 

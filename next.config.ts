@@ -42,9 +42,9 @@ const nextConfig: NextConfig = {
     ],
   },
   // Ensure proper build configuration for production
-  ...(process.env.NODE_ENV === "production" && {
-    output: "standalone",
-  }),
+  // ...(process.env.NODE_ENV === "production" && {
+  //   output: "standalone",
+  // }),
 };
 
 export default nextConfig;

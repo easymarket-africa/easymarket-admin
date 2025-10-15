@@ -134,7 +134,8 @@ class WebSocketService {
       return;
     }
 
-    console.log("🔌 Connecting to WebSocket server...");
+    console.log("🔌 Connecting to WebSocket server:", serverUrl);
+    console.log("🔌 Using token:", token ? "✅ Present" : "❌ Missing");
 
     this.socket = io(serverUrl, {
       auth: {
@@ -142,6 +143,10 @@ class WebSocketService {
       },
       transports: ["websocket", "polling"],
       forceNew: true,
+      timeout: 20000,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
     // Set up socket event listeners
