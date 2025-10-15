@@ -10,17 +10,27 @@ import React, {
 import { useWebSocket, UseWebSocketOptions } from "@/hooks/use-websocket";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import {
+  WebSocketMessage,
+  OrderUpdateData,
+  NotificationData,
+  ChatData,
+} from "@/services/websocket.service";
 
 interface WebSocketContextType {
   isConnected: boolean;
   socketId: string | undefined;
   transport: string | undefined;
-  lastMessage: any;
+  lastMessage: WebSocketMessage | null;
   sendPing: () => void;
   joinRoom: (roomName: string) => void;
   leaveRoom: (roomName: string) => void;
-  sendAdminBroadcast: (event: string, message: any) => void;
-  sendToUser: (userId: number, event: string, message: any) => void;
+  sendAdminBroadcast: (event: string, message: Record<string, unknown>) => void;
+  sendToUser: (
+    userId: number,
+    event: string,
+    message: Record<string, unknown>
+  ) => void;
   connectionStatus: "connecting" | "connected" | "disconnected" | "error";
 }
 
@@ -40,7 +50,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     "connecting" | "connected" | "disconnected" | "error"
   >("disconnected");
 
-  const handleOrderUpdate = (data: any) => {
+  const handleOrderUpdate = (data: OrderUpdateData) => {
     console.log("📦 Order update received in admin:", data);
     toast.info(`Order Update: ${data.orderNumber}`, {
       description: data.message,
@@ -48,7 +58,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     });
   };
 
-  const handleNotification = (data: any) => {
+  const handleNotification = (data: NotificationData) => {
     console.log("🔔 Notification received in admin:", data);
     toast.info(data.title, {
       description: data.message,
@@ -56,7 +66,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     });
   };
 
-  const handleChatMessage = (data: any) => {
+  const handleChatMessage = (data: ChatData) => {
     console.log("💬 Chat message received in admin:", data);
     toast.info(`New Message from ${data.senderName}`, {
       description: data.message,
@@ -64,10 +74,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     });
   };
 
-  const handleBroadcast = (data: any) => {
+  const handleBroadcast = (data: Record<string, unknown>) => {
     console.log("📢 Broadcast received in admin:", data);
     toast.info("System Broadcast", {
-      description: data.message,
+      description: String(data.message || "System notification"),
       duration: 5000,
     });
   };
@@ -84,7 +94,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     toast.error("Disconnected from real-time updates");
   };
 
-  const handleError = (error: any) => {
+  const handleError = (error: Error) => {
     console.error("❌ WebSocket error in admin panel:", error);
     setConnectionStatus("error");
     toast.error("WebSocket connection error");

@@ -14,10 +14,10 @@ export interface UseWebSocketOptions {
   onOrderUpdate?: (data: OrderUpdateData) => void;
   onNotification?: (data: NotificationData) => void;
   onChatMessage?: (data: ChatData) => void;
-  onBroadcast?: (data: any) => void;
+  onBroadcast?: (data: Record<string, unknown>) => void;
   onConnect?: () => void;
   onDisconnect?: (reason: string) => void;
-  onError?: (error: any) => void;
+  onError?: (error: Error) => void;
 }
 
 export interface UseWebSocketReturn {
@@ -30,8 +30,12 @@ export interface UseWebSocketReturn {
   sendPing: () => void;
   joinRoom: (roomName: string) => void;
   leaveRoom: (roomName: string) => void;
-  sendAdminBroadcast: (event: string, message: any) => void;
-  sendToUser: (userId: number, event: string, message: any) => void;
+  sendAdminBroadcast: (event: string, message: Record<string, unknown>) => void;
+  sendToUser: (
+    userId: number,
+    event: string,
+    message: Record<string, unknown>
+  ) => void;
 }
 
 export const useWebSocket = (
@@ -95,35 +99,49 @@ export const useWebSocket = (
     callbacksRef.current.onConnect?.();
   }, []);
 
-  const handleDisconnect = useCallback((reason: string) => {
+  const handleDisconnect = useCallback((...args: unknown[]) => {
+    const reason = args[0] as string;
     setIsConnected(false);
     setSocketId(undefined);
     setTransport(undefined);
     callbacksRef.current.onDisconnect?.(reason);
   }, []);
 
-  const handleError = useCallback((error: any) => {
+  const handleError = useCallback((...args: unknown[]) => {
+    const error = args[0] as Error;
     callbacksRef.current.onError?.(error);
   }, []);
 
-  const handleOrderUpdate = useCallback((data: WebSocketMessage) => {
+  const handleOrderUpdate = useCallback((...args: unknown[]) => {
+    const data = args[0] as WebSocketMessage;
     setLastMessage(data);
-    callbacksRef.current.onOrderUpdate?.(data.data);
+    if (data.type === "order") {
+      callbacksRef.current.onOrderUpdate?.(data.data as OrderUpdateData);
+    }
   }, []);
 
-  const handleNotification = useCallback((data: WebSocketMessage) => {
+  const handleNotification = useCallback((...args: unknown[]) => {
+    const data = args[0] as WebSocketMessage;
     setLastMessage(data);
-    callbacksRef.current.onNotification?.(data.data);
+    if (data.type === "notification") {
+      callbacksRef.current.onNotification?.(data.data as NotificationData);
+    }
   }, []);
 
-  const handleChatMessage = useCallback((data: WebSocketMessage) => {
+  const handleChatMessage = useCallback((...args: unknown[]) => {
+    const data = args[0] as WebSocketMessage;
     setLastMessage(data);
-    callbacksRef.current.onChatMessage?.(data.data);
+    if (data.type === "chat") {
+      callbacksRef.current.onChatMessage?.(data.data as ChatData);
+    }
   }, []);
 
-  const handleBroadcast = useCallback((data: WebSocketMessage) => {
+  const handleBroadcast = useCallback((...args: unknown[]) => {
+    const data = args[0] as WebSocketMessage;
     setLastMessage(data);
-    callbacksRef.current.onBroadcast?.(data.data);
+    if (data.type === "broadcast") {
+      callbacksRef.current.onBroadcast?.(data.data as Record<string, unknown>);
+    }
   }, []);
 
   // Connect function
@@ -152,12 +170,15 @@ export const useWebSocket = (
     webSocketService.leaveRoom(roomName);
   }, []);
 
-  const sendAdminBroadcast = useCallback((event: string, message: any) => {
-    webSocketService.sendAdminBroadcast(event, message);
-  }, []);
+  const sendAdminBroadcast = useCallback(
+    (event: string, message: Record<string, unknown>) => {
+      webSocketService.sendAdminBroadcast(event, message);
+    },
+    []
+  );
 
   const sendToUser = useCallback(
-    (userId: number, event: string, message: any) => {
+    (userId: number, event: string, message: Record<string, unknown>) => {
       webSocketService.sendToUser(userId, event, message);
     },
     []

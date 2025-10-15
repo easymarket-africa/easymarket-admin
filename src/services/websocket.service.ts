@@ -3,7 +3,7 @@ import { io, Socket } from "socket.io-client";
 export interface WebSocketMessage {
   id: string;
   type: "order" | "notification" | "chat" | "broadcast";
-  data: any;
+  data: OrderUpdateData | NotificationData | ChatData | Record<string, unknown>;
   timestamp: string;
 }
 
@@ -20,7 +20,7 @@ export interface OrderUpdateData {
     agentName?: string;
     estimatedDeliveryTime?: Date;
     actualDeliveryTime?: Date;
-    trackingInfo?: any;
+    trackingInfo?: Record<string, unknown>;
     cancellationReason?: string;
   };
 }
@@ -44,7 +44,8 @@ class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectInterval = 1000;
-  private eventListeners: Map<string, Function[]> = new Map();
+  private eventListeners: Map<string, ((...args: unknown[]) => void)[]> =
+    new Map();
 
   constructor() {
     this.setupEventListeners();
@@ -58,39 +59,47 @@ class WebSocketService {
       this.reconnectAttempts = 0;
     });
 
-    this.addEventListener("disconnect", (reason: string) => {
+    this.addEventListener("disconnect", (...args: unknown[]) => {
+      const reason = args[0] as string;
       console.log("🔌 WebSocket disconnected:", reason);
       this.isConnected = false;
       this.handleReconnection();
     });
 
-    this.addEventListener("connect_error", (error: Error) => {
+    this.addEventListener("connect_error", (...args: unknown[]) => {
+      const error = args[0] as Error;
       console.error("❌ WebSocket connection error:", error);
       this.handleReconnection();
     });
 
     // Message events
-    this.addEventListener("order", (data: WebSocketMessage) => {
+    this.addEventListener("order", (...args: unknown[]) => {
+      const data = args[0] as WebSocketMessage;
       console.log("📦 Order update received:", data);
     });
 
-    this.addEventListener("notification", (data: WebSocketMessage) => {
+    this.addEventListener("notification", (...args: unknown[]) => {
+      const data = args[0] as WebSocketMessage;
       console.log("🔔 Notification received:", data);
     });
 
-    this.addEventListener("chat", (data: WebSocketMessage) => {
+    this.addEventListener("chat", (...args: unknown[]) => {
+      const data = args[0] as WebSocketMessage;
       console.log("💬 Chat message received:", data);
     });
 
-    this.addEventListener("broadcast", (data: WebSocketMessage) => {
+    this.addEventListener("broadcast", (...args: unknown[]) => {
+      const data = args[0] as WebSocketMessage;
       console.log("📢 Broadcast received:", data);
     });
 
-    this.addEventListener("connected", (data: any) => {
+    this.addEventListener("connected", (...args: unknown[]) => {
+      const data = args[0] as Record<string, unknown>;
       console.log("✅ Connection confirmed:", data);
     });
 
-    this.addEventListener("error", (data: any) => {
+    this.addEventListener("error", (...args: unknown[]) => {
+      const data = args[0] as Record<string, unknown>;
       console.error("❌ WebSocket error:", data);
     });
   }
@@ -164,15 +173,15 @@ class WebSocketService {
       this.emit("broadcast", data);
     });
 
-    this.socket.on("connected", (data: any) => {
+    this.socket.on("connected", (data: Record<string, unknown>) => {
       this.emit("connected", data);
     });
 
-    this.socket.on("error", (data: any) => {
+    this.socket.on("error", (data: Record<string, unknown>) => {
       this.emit("error", data);
     });
 
-    this.socket.on("pong", (data: any) => {
+    this.socket.on("pong", (data: Record<string, unknown>) => {
       console.log("🏓 Pong received:", data);
     });
   }
@@ -205,27 +214,27 @@ class WebSocketService {
     }
   }
 
-  sendAdminBroadcast(event: string, message: any) {
+  sendAdminBroadcast(event: string, message: Record<string, unknown>) {
     if (this.socket && this.isConnected) {
       this.socket.emit("admin_broadcast", { event, message });
     }
   }
 
-  sendToUser(userId: number, event: string, message: any) {
+  sendToUser(userId: number, event: string, message: Record<string, unknown>) {
     if (this.socket && this.isConnected) {
       this.socket.emit("admin_send_to_user", { userId, event, message });
     }
   }
 
   // Event listener management
-  addEventListener(event: string, callback: Function) {
+  addEventListener(event: string, callback: (...args: unknown[]) => void) {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, []);
     }
     this.eventListeners.get(event)!.push(callback);
   }
 
-  removeEventListener(event: string, callback: Function) {
+  removeEventListener(event: string, callback: (...args: unknown[]) => void) {
     const listeners = this.eventListeners.get(event);
     if (listeners) {
       const index = listeners.indexOf(callback);
@@ -235,7 +244,7 @@ class WebSocketService {
     }
   }
 
-  private emit(event: string, data?: any) {
+  private emit(event: string, data?: unknown) {
     const listeners = this.eventListeners.get(event);
     if (listeners) {
       listeners.forEach((callback) => callback(data));
