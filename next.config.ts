@@ -39,6 +39,24 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "tehorafoodhub.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "tmaglobal.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "afrominimart.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
   // Ensure proper build configuration for production

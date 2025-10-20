@@ -13,6 +13,7 @@ import {
   LogOut,
   Package,
   Loader2,
+  Tags,
 } from "lucide-react";
 
 import {
@@ -54,6 +55,11 @@ const data = {
       title: "Products",
       url: "/dashboard/products",
       icon: Package,
+    },
+    {
+      title: "Categories",
+      url: "/dashboard/categories",
+      icon: Tags,
     },
     {
       title: "Agents",

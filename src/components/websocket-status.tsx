@@ -97,7 +97,7 @@ export const WebSocketStatus: React.FC = () => {
             )}
             <div className="text-sm text-gray-600">
               Server:{" "}
-              {process.env.NEXT_PUBLIC_WEBSOCKET_URL || "localhost:3001"}
+              {process.env.NEXT_PUBLIC_WEBSOCKET_URL || "localhost:3100"}
             </div>
           </div>
         </TooltipContent>

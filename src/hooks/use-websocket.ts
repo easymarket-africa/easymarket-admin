@@ -44,7 +44,7 @@ export const useWebSocket = (
   const {
     token,
     serverUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL ||
-      "http://localhost:3001",
+      "http://localhost:3100",
     autoConnect = true,
     onOrderUpdate,
     onNotification,

@@ -84,7 +84,7 @@ export default function VendorsPage() {
   const updateVendorMutation = useUpdateVendor();
   const deleteVendorMutation = useDeleteVendor();
 
-  const vendors = vendorsData?.data || [];
+  const vendors = vendorsData?.vendors || [];
   const metrics = metricsData || {
     totalVendors: 0,
     active: 0,

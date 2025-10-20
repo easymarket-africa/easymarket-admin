@@ -111,7 +111,11 @@ export class ProductsService {
    * Get all product categories
    */
   async getCategories(): Promise<string[]> {
-    return apiClient.get<string[]>(`${this.basePath}/categories`);
+    const response = await apiClient.get<{
+      categories: { name: string }[];
+      total: number;
+    }>("/admin/categories");
+    return response.categories?.map((category) => category.name) || [];
   }
 }
 

@@ -3,7 +3,7 @@ import {
   VendorDetails,
   VendorFilters,
   VendorMetrics,
-  PaginatedResponse,
+  VendorsResponse,
   CreateVendorRequest,
   UpdateVendorRequest,
   Product,
@@ -21,9 +21,7 @@ export class VendorsService {
   /**
    * Get all vendors with filtering and pagination
    */
-  async getVendors(
-    filters: VendorFilters = {}
-  ): Promise<PaginatedResponse<VendorDetails>> {
+  async getVendors(filters: VendorFilters = {}): Promise<VendorsResponse> {
     const params = new URLSearchParams();
 
     Object.entries(filters).forEach(([key, value]) => {
@@ -35,7 +33,7 @@ export class VendorsService {
     const queryString = params.toString();
     const url = queryString ? `${this.basePath}?${queryString}` : this.basePath;
 
-    return apiClient.get<PaginatedResponse<VendorDetails>>(url);
+    return apiClient.get<VendorsResponse>(url);
   }
 
   /**

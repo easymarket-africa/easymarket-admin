@@ -89,6 +89,11 @@ export default function ProductsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // API hooks
   const {
@@ -122,8 +127,8 @@ export default function ProductsPage() {
     outOfStock: 0,
     totalValue: 0,
   };
-  const categories = categoriesData || [];
-  const vendors = vendorsData?.data || [];
+  const categories = Array.isArray(categoriesData) ? categoriesData : [];
+  const vendors = vendorsData?.vendors || [];
 
   const handleCreateProduct = async (formData: CreateProductRequest) => {
     try {
@@ -400,6 +405,8 @@ export default function ProductsPage() {
         </CardHeader>
         <CardContent>
           {productsLoading ? (
+            <TableSkeleton />
+          ) : !isClient ? (
             <TableSkeleton />
           ) : (
             <Table>

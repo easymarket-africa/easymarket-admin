@@ -97,13 +97,19 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   const handleError = (error: Error) => {
     console.error("❌ WebSocket error in admin panel:", error);
     setConnectionStatus("error");
-    toast.error("WebSocket connection error");
+    // Only show error toast for unexpected errors, not connection failures
+    if (
+      !error.message.includes("websocket error") &&
+      !error.message.includes("TransportError")
+    ) {
+      toast.error("WebSocket connection error");
+    }
   };
 
   const webSocketOptions: UseWebSocketOptions = {
     token: token || undefined,
-    serverUrl: process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:3001",
-    autoConnect: isAuthenticated,
+    serverUrl: process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:3100",
+    autoConnect: false, // Disable auto-connect to prevent errors when backend is not running
     onOrderUpdate: handleOrderUpdate,
     onNotification: handleNotification,
     onChatMessage: handleChatMessage,
@@ -118,6 +124,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     socketId,
     transport,
     lastMessage,
+    connect,
     sendPing,
     joinRoom,
     leaveRoom,
@@ -135,6 +142,18 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       setConnectionStatus("disconnected");
     }
   }, [isAuthenticated, isConnected]);
+
+  // Attempt to connect when authenticated (with delay to allow backend to start)
+  useEffect(() => {
+    if (isAuthenticated && token && !isConnected) {
+      const timer = setTimeout(() => {
+        console.log("🔌 Attempting to connect to WebSocket...");
+        connect(token);
+      }, 2000); // 2 second delay
+
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, token, isConnected, connect]);
 
   // Join admin room when connected
   useEffect(() => {

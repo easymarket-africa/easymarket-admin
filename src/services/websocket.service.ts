@@ -127,7 +127,7 @@ class WebSocketService {
   connect(
     token: string,
     serverUrl: string = process.env.NEXT_PUBLIC_WEBSOCKET_URL ||
-      "http://localhost:3001"
+      "http://localhost:3100"
   ) {
     if (this.socket && this.isConnected) {
       console.log("🔌 Already connected to WebSocket");
@@ -137,17 +137,24 @@ class WebSocketService {
     console.log("🔌 Connecting to WebSocket server:", serverUrl);
     console.log("🔌 Using token:", token ? "✅ Present" : "❌ Missing");
 
-    this.socket = io(serverUrl, {
-      auth: {
-        token: token,
-      },
-      transports: ["websocket", "polling"],
-      forceNew: true,
-      timeout: 20000,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
+    try {
+      this.socket = io(serverUrl, {
+        auth: {
+          token: token,
+        },
+        transports: ["websocket", "polling"],
+        forceNew: true,
+        timeout: 10000, // Reduced timeout
+        reconnection: true,
+        reconnectionAttempts: 3, // Reduced attempts
+        reconnectionDelay: 2000, // Increased delay
+        reconnectionDelayMax: 10000,
+      });
+    } catch (error) {
+      console.error("❌ Failed to create WebSocket connection:", error);
+      this.emit("connect_error", error);
+      return;
+    }
 
     // Set up socket event listeners
     this.socket.on("connect", () => {
