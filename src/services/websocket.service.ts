@@ -126,8 +126,7 @@ class WebSocketService {
 
   connect(
     token: string,
-    serverUrl: string = process.env.NEXT_PUBLIC_WEBSOCKET_URL ||
-      "http://localhost:3100"
+    serverUrl: string | undefined = process.env.NEXT_PUBLIC_WEBSOCKET_URL
   ) {
     if (this.socket && this.isConnected) {
       console.log("🔌 Already connected to WebSocket");
