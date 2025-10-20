@@ -48,4 +48,3 @@ export class CategoriesService {
 
 // Export singleton instance
 export const categoriesService = new CategoriesService();
-
