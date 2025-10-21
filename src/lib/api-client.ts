@@ -31,6 +31,7 @@ const axiosInstance: AxiosInstance = axios.create({
   timeout: API_TIMEOUT,
   headers: {
     "Content-Type": "application/json",
+    "ngrok-skip-browser-warning": "true", // Skip ngrok browser warning
   },
 });
 

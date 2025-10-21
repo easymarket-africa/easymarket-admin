@@ -85,25 +85,16 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   const handleConnect = () => {
     console.log("✅ WebSocket connected in admin panel");
     setConnectionStatus("connected");
-    toast.success("Connected to real-time updates");
   };
 
   const handleDisconnect = (reason: string) => {
     console.log("❌ WebSocket disconnected in admin panel:", reason);
     setConnectionStatus("disconnected");
-    toast.error("Disconnected from real-time updates");
   };
 
   const handleError = (error: Error) => {
     console.error("❌ WebSocket error in admin panel:", error);
     setConnectionStatus("error");
-    // Only show error toast for unexpected errors, not connection failures
-    if (
-      !error.message.includes("websocket error") &&
-      !error.message.includes("TransportError")
-    ) {
-      toast.error("WebSocket connection error");
-    }
   };
 
   const webSocketOptions: UseWebSocketOptions = {

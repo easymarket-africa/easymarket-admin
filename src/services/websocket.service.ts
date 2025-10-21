@@ -148,6 +148,9 @@ class WebSocketService {
         reconnectionAttempts: 3, // Reduced attempts
         reconnectionDelay: 2000, // Increased delay
         reconnectionDelayMax: 10000,
+        extraHeaders: {
+          "ngrok-skip-browser-warning": "true", // Skip ngrok browser warning
+        },
       });
     } catch (error) {
       console.error("❌ Failed to create WebSocket connection:", error);
