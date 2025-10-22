@@ -99,7 +99,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
   const webSocketOptions: UseWebSocketOptions = {
     token: token || undefined,
-    serverUrl: process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:3100",
+    serverUrl:
+      process.env.NEXT_PUBLIC_WEBSOCKET_URL ||
+      "wss://ir8pwrxat5.eu-west-1.awsapprunner.com",
     autoConnect: false, // Disable auto-connect to prevent errors when backend is not running
     onOrderUpdate: handleOrderUpdate,
     onNotification: handleNotification,

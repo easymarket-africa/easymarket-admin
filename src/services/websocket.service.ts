@@ -133,24 +133,33 @@ class WebSocketService {
       return;
     }
 
-    console.log("🔌 Connecting to WebSocket server:", serverUrl);
+    // Default to your production WebSocket URL if not set
+    const wsUrl = serverUrl || "wss://ir8pwrxat5.eu-west-1.awsapprunner.com";
+
+    console.log("🔌 Connecting to WebSocket server:", wsUrl);
     console.log("🔌 Using token:", token ? "✅ Present" : "❌ Missing");
 
     try {
-      this.socket = io(serverUrl, {
+      this.socket = io(wsUrl, {
         auth: {
           token: token,
         },
         transports: ["websocket", "polling"],
         forceNew: true,
-        timeout: 10000, // Reduced timeout
+        timeout: 15000, // Increased timeout for production
         reconnection: true,
-        reconnectionAttempts: 3, // Reduced attempts
-        reconnectionDelay: 2000, // Increased delay
-        reconnectionDelayMax: 10000,
+        reconnectionAttempts: 5, // Increased attempts
+        reconnectionDelay: 2000,
+        reconnectionDelayMax: 15000,
         extraHeaders: {
           "ngrok-skip-browser-warning": "true", // Skip ngrok browser warning
         },
+        // Additional options for production
+        upgrade: true,
+        rememberUpgrade: true,
+        // Handle connection issues better
+        autoConnect: true,
+        multiplex: true,
       });
     } catch (error) {
       console.error("❌ Failed to create WebSocket connection:", error);
