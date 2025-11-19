@@ -177,7 +177,8 @@ class WebSocketService {
     });
 
     this.socket.on("connect_error", (error: Error) => {
-      this.emit("connect_error", error);
+      // Pass through connect_error as error event for consistent handling
+      this.emit("error", error);
     });
 
     this.socket.on("order", (data: WebSocketMessage) => {
@@ -201,7 +202,11 @@ class WebSocketService {
     });
 
     this.socket.on("error", (data: Record<string, unknown>) => {
-      this.emit("error", data);
+      // Convert error object to Error instance for consistent handling
+      const errorMessage =
+        (data.error as string) || (data.message as string) || "WebSocket error";
+      const error = new Error(errorMessage);
+      this.emit("error", error);
     });
 
     this.socket.on("pong", (data: Record<string, unknown>) => {

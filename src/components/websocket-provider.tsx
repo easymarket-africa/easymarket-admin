@@ -6,9 +6,12 @@ import React, {
   useEffect,
   useState,
   ReactNode,
+  useRef,
 } from "react";
 import { useWebSocket, UseWebSocketOptions } from "@/hooks/use-websocket";
 import { useAuth } from "@/hooks/use-auth";
+import { useRefreshToken } from "@/hooks/use-auth";
+import { tokenManager } from "@/lib/api-client";
 import { toast } from "sonner";
 import {
   WebSocketMessage,
@@ -46,6 +49,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   children,
 }) => {
   const { token, isAuthenticated } = useAuth();
+  const refreshTokenMutation = useRefreshToken();
+  const refreshAttemptedRef = useRef(false);
   const [connectionStatus, setConnectionStatus] = useState<
     "connecting" | "connected" | "disconnected" | "error"
   >("disconnected");
@@ -85,6 +90,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   const handleConnect = () => {
     console.log("✅ WebSocket connected in admin panel");
     setConnectionStatus("connected");
+    refreshAttemptedRef.current = false; // Reset on successful connection
   };
 
   const handleDisconnect = (reason: string) => {
@@ -92,9 +98,49 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     setConnectionStatus("disconnected");
   };
 
-  const handleError = (error: Error) => {
+  const handleError = async (error: Error) => {
     console.error("❌ WebSocket error in admin panel:", error);
-    setConnectionStatus("error");
+
+    // Check if error is due to JWT expiration
+    if (
+      error.message?.toLowerCase().includes("jwt expired") ||
+      error.message?.toLowerCase().includes("token expired") ||
+      error.message?.toLowerCase().includes("authentication failed")
+    ) {
+      // Only attempt refresh once per error
+      if (!refreshAttemptedRef.current) {
+        refreshAttemptedRef.current = true;
+        const refreshToken = tokenManager.getRefreshToken();
+
+        if (refreshToken) {
+          try {
+            console.log(
+              "🔄 Attempting to refresh token and reconnect WebSocket..."
+            );
+            await refreshTokenMutation.mutateAsync(refreshToken);
+
+            // Get the new token and reconnect
+            const newToken = tokenManager.getAccessToken();
+            if (newToken) {
+              setTimeout(() => {
+                connect(newToken);
+                refreshAttemptedRef.current = false;
+              }, 500);
+            }
+          } catch (refreshError) {
+            console.error("❌ Token refresh failed:", refreshError);
+            setConnectionStatus("error");
+            refreshAttemptedRef.current = false;
+          }
+        } else {
+          console.error("❌ No refresh token available");
+          setConnectionStatus("error");
+          refreshAttemptedRef.current = false;
+        }
+      }
+    } else {
+      setConnectionStatus("error");
+    }
   };
 
   const webSocketOptions: UseWebSocketOptions = {
@@ -139,6 +185,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   // Attempt to connect when authenticated (with delay to allow backend to start)
   useEffect(() => {
     if (isAuthenticated && token && !isConnected) {
+      refreshAttemptedRef.current = false; // Reset refresh attempt flag
       const timer = setTimeout(() => {
         console.log("🔌 Attempting to connect to WebSocket...");
         connect(token);

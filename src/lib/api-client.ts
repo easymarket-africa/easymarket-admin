@@ -22,8 +22,25 @@ const safeLocalStorage = {
 };
 
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-const API_TIMEOUT = 30000; // 30 seconds
+const getApiBaseUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!apiUrl) {
+    if (typeof window !== "undefined") {
+      console.error(
+        "NEXT_PUBLIC_API_URL is not set. Please configure it in your .env file."
+      );
+    }
+    throw new Error(
+      "NEXT_PUBLIC_API_URL environment variable is required but not set."
+    );
+  }
+
+  return apiUrl;
+};
+
+const API_BASE_URL = getApiBaseUrl();
+const API_TIMEOUT = 30000; 
 
 // Create axios instance
 const axiosInstance: AxiosInstance = axios.create({
