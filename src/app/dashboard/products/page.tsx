@@ -557,7 +557,7 @@ function ProductForm({
     unit: initialData?.unit || "",
     stockQuantity: initialData?.stockQuantity || 0,
     sku: initialData?.sku || "",
-    weight: initialData?.weight || 0,
+    weight: initialData?.weight?.toString() || "",
     dimensions: initialData?.dimensions || "",
     tags: initialData?.tags?.join(", ") || "",
     isFeatured: initialData?.isFeatured || false,
@@ -567,7 +567,7 @@ function ProductForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const submitData = {
+    const submitData: any = {
       ...formData,
       price: parseFloat(formData.price),
       tags: formData.tags
@@ -575,6 +575,23 @@ function ProductForm({
         .map((tag) => tag.trim())
         .filter(Boolean),
     };
+
+    // Only include weight if it's provided and not empty
+    if (formData.weight && formData.weight.trim() !== "") {
+      const weightValue = parseFloat(formData.weight);
+      if (!isNaN(weightValue) && weightValue >= 0) {
+        submitData.weight = weightValue;
+      }
+    } else {
+      // Don't include weight if it's empty (let backend use existing value or null)
+      delete submitData.weight;
+    }
+
+    // Handle vendorId: if 0 or invalid, set to null (or don't include it)
+    if (submitData.vendorId === 0 || !submitData.vendorId) {
+      submitData.vendorId = null;
+    }
+
     onSubmit(submitData);
   };
 
@@ -680,7 +697,7 @@ function ProductForm({
             onChange={(e) =>
               setFormData({
                 ...formData,
-                stockQuantity: parseInt(e.target.value),
+                stockQuantity: parseInt(e.target.value) || 0,
               })
             }
             required
@@ -693,6 +710,34 @@ function ProductForm({
             value={formData.sku}
             onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
             required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="weight">Weight (kg)</Label>
+          <Input
+            id="weight"
+            type="number"
+            step="0.01"
+            min="0"
+            value={formData.weight}
+            onChange={(e) =>
+              setFormData({ ...formData, weight: e.target.value })
+            }
+            placeholder="Optional"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="dimensions">Dimensions</Label>
+          <Input
+            id="dimensions"
+            value={formData.dimensions}
+            onChange={(e) =>
+              setFormData({ ...formData, dimensions: e.target.value })
+            }
+            placeholder="Optional"
           />
         </div>
       </div>
