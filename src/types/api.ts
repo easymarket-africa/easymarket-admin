@@ -364,7 +364,7 @@ export interface UpdateProductRequest {
   tags?: string[];
   isFeatured?: boolean;
   isActive?: boolean;
-  vendorId?: number;
+  vendorId?: number | null;
 }
 
 export interface BulkUploadResponse {

@@ -567,13 +567,21 @@ function ProductForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const submitData: any = {
-      ...formData,
+    const submitData: Partial<UpdateProductRequest> = {
+      name: formData.name,
+      description: formData.description,
+      category: formData.category,
       price: parseFloat(formData.price),
+      unit: formData.unit,
+      stockQuantity: formData.stockQuantity,
+      sku: formData.sku,
+      dimensions: formData.dimensions,
       tags: formData.tags
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean),
+      isFeatured: formData.isFeatured,
+      isActive: formData.isActive,
     };
 
     // Only include weight if it's provided and not empty
@@ -582,14 +590,13 @@ function ProductForm({
       if (!isNaN(weightValue) && weightValue >= 0) {
         submitData.weight = weightValue;
       }
-    } else {
-      // Don't include weight if it's empty (let backend use existing value or null)
-      delete submitData.weight;
     }
 
     // Handle vendorId: if 0 or invalid, set to null (or don't include it)
-    if (submitData.vendorId === 0 || !submitData.vendorId) {
+    if (formData.vendorId === 0 || !formData.vendorId) {
       submitData.vendorId = null;
+    } else {
+      submitData.vendorId = formData.vendorId;
     }
 
     onSubmit(submitData);
