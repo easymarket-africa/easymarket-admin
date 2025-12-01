@@ -40,7 +40,7 @@ const getApiBaseUrl = (): string => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
-const API_TIMEOUT = 30000; 
+const API_TIMEOUT = 30000;
 
 // Create axios instance
 const axiosInstance: AxiosInstance = axios.create({
@@ -164,6 +164,54 @@ export class ApiClient {
     config?: AxiosRequestConfig
   ): Promise<T> {
     const response = await this.client.put<T>(url, data, config);
+    return response.data;
+  }
+
+  // Post with FormData (for file uploads)
+  async postForm<T>(
+    url: string,
+    formData: FormData,
+    onProgress?: (progress: number) => void
+  ): Promise<T> {
+    const config: AxiosRequestConfig = {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(progress);
+        }
+      },
+    };
+
+    const response = await this.client.post<T>(url, formData, config);
+    return response.data;
+  }
+
+  // Put with FormData (for file uploads)
+  async putForm<T>(
+    url: string,
+    formData: FormData,
+    onProgress?: (progress: number) => void
+  ): Promise<T> {
+    const config: AxiosRequestConfig = {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(progress);
+        }
+      },
+    };
+
+    const response = await this.client.put<T>(url, formData, config);
     return response.data;
   }
 

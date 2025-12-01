@@ -82,7 +82,7 @@ export function useCreateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateProductRequest) =>
+    mutationFn: (data: CreateProductRequest | FormData) =>
       productsService.createProduct(data),
     onSuccess: () => {
       // Invalidate products list to refresh
@@ -120,8 +120,13 @@ export function useUpdateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateProductRequest }) =>
-      productsService.updateProduct(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: UpdateProductRequest | FormData;
+    }) => productsService.updateProduct(id, data),
     onSuccess: (updatedProduct: Product) => {
       // Update the specific product in cache
       queryClient.setQueryData(
