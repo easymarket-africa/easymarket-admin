@@ -51,20 +51,42 @@ export class ProductsService {
   }
 
   /**
-   * Create new product
+   * Create new product (supports FormData for image uploads)
    */
-  async createProduct(data: CreateProductRequest): Promise<Product> {
+  async createProduct(data: CreateProductRequest | FormData): Promise<Product> {
+    if (data instanceof FormData) {
+      return apiClient.postForm<Product>(this.basePath, data);
+    }
     return apiClient.post<Product>(this.basePath, data);
   }
 
   /**
-   * Update existing product
+   * Update existing product (supports FormData for image uploads)
    */
   async updateProduct(
     id: number,
-    data: UpdateProductRequest
+    data: UpdateProductRequest | FormData
   ): Promise<Product> {
-    return apiClient.put<Product>(`${this.basePath}/${id}`, data);
+    const formData =
+      data instanceof FormData ? data : this.convertToFormData(data);
+
+    return apiClient.putForm<Product>(`${this.basePath}/${id}`, formData);
+  }
+
+  private convertToFormData(data: UpdateProductRequest): FormData {
+    const formData = new FormData();
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          value.forEach((item) => formData.append(key, item.toString()));
+        } else {
+          formData.append(key, value.toString());
+        }
+      }
+    });
+
+    return formData;
   }
 
   /**
@@ -111,7 +133,11 @@ export class ProductsService {
    * Get all product categories
    */
   async getCategories(): Promise<string[]> {
-    return apiClient.get<string[]>(`${this.basePath}/categories`);
+    const response = await apiClient.get<{
+      categories: { name: string }[];
+      total: number;
+    }>("/admin/categories");
+    return response.categories?.map((category) => category.name) || [];
   }
 }
 

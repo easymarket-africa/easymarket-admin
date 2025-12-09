@@ -126,23 +126,46 @@ class WebSocketService {
 
   connect(
     token: string,
-    serverUrl: string = process.env.NEXT_PUBLIC_WEBSOCKET_URL ||
-      "http://localhost:3001"
+    serverUrl: string | undefined = process.env.NEXT_PUBLIC_WEBSOCKET_URL
   ) {
     if (this.socket && this.isConnected) {
       console.log("🔌 Already connected to WebSocket");
       return;
     }
 
-    console.log("🔌 Connecting to WebSocket server...");
+    // Default to your production WebSocket URL if not set
+    const wsUrl = serverUrl || "wss://ir8pwrxat5.eu-west-1.awsapprunner.com";
 
-    this.socket = io(serverUrl, {
-      auth: {
-        token: token,
-      },
-      transports: ["websocket", "polling"],
-      forceNew: true,
-    });
+    console.log("🔌 Connecting to WebSocket server:", wsUrl);
+    console.log("🔌 Using token:", token ? "✅ Present" : "❌ Missing");
+
+    try {
+      this.socket = io(wsUrl, {
+        auth: {
+          token: token,
+        },
+        transports: ["websocket", "polling"],
+        forceNew: true,
+        timeout: 15000, // Increased timeout for production
+        reconnection: true,
+        reconnectionAttempts: 5, // Increased attempts
+        reconnectionDelay: 2000,
+        reconnectionDelayMax: 15000,
+        extraHeaders: {
+          "ngrok-skip-browser-warning": "true", // Skip ngrok browser warning
+        },
+        // Additional options for production
+        upgrade: true,
+        rememberUpgrade: true,
+        // Handle connection issues better
+        autoConnect: true,
+        multiplex: true,
+      });
+    } catch (error) {
+      console.error("❌ Failed to create WebSocket connection:", error);
+      this.emit("connect_error", error);
+      return;
+    }
 
     // Set up socket event listeners
     this.socket.on("connect", () => {
@@ -154,7 +177,8 @@ class WebSocketService {
     });
 
     this.socket.on("connect_error", (error: Error) => {
-      this.emit("connect_error", error);
+      // Pass through connect_error as error event for consistent handling
+      this.emit("error", error);
     });
 
     this.socket.on("order", (data: WebSocketMessage) => {
@@ -178,7 +202,11 @@ class WebSocketService {
     });
 
     this.socket.on("error", (data: Record<string, unknown>) => {
-      this.emit("error", data);
+      // Convert error object to Error instance for consistent handling
+      const errorMessage =
+        (data.error as string) || (data.message as string) || "WebSocket error";
+      const error = new Error(errorMessage);
+      this.emit("error", error);
     });
 
     this.socket.on("pong", (data: Record<string, unknown>) => {

@@ -5,6 +5,32 @@ export interface ApiResponse<T> {
   success: boolean;
 }
 
+// Category Types
+export interface Category {
+  id: number;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  isActive: boolean;
+  sortOrder: number;
+  color?: string;
+  icon?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCategoryRequest {
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  isActive?: boolean;
+  sortOrder?: number;
+  color?: string;
+  icon?: string;
+}
+
+export type UpdateCategoryRequest = Partial<CreateCategoryRequest>;
+
 export interface PaginatedResponse<T> {
   data: T[];
   total: number;
@@ -40,6 +66,15 @@ export interface AvailableAgentsResponse {
 // Products specific response (since it uses 'products' instead of 'data')
 export interface ProductsResponse {
   products: Product[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// Vendors specific response (since it uses 'vendors' instead of 'data')
+export interface VendorsResponse {
+  vendors: VendorDetails[];
   total: number;
   page: number;
   limit: number;
@@ -329,7 +364,7 @@ export interface UpdateProductRequest {
   tags?: string[];
   isFeatured?: boolean;
   isActive?: boolean;
-  vendorId?: number;
+  vendorId?: number | null;
 }
 
 export interface BulkUploadResponse {

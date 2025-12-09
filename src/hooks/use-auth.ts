@@ -4,6 +4,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authService } from "@/services/auth.service";
 import { queryKeys } from "@/lib/query-client";
 import { tokenManager } from "@/lib/api-client";
+
+// SSR-safe safeLocalStorage utilities
+const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem(key);
+  },
+  setItem: (key: string, value: string): void => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(key, value);
+  },
+  removeItem: (key: string): void => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(key);
+  },
+};
 import {
   LoginRequest,
   LoginResponse,
@@ -60,11 +76,11 @@ export function useLogin() {
   return useMutation({
     mutationFn: (credentials: LoginRequest) => authService.login(credentials),
     onSuccess: (data: LoginResponse) => {
-      // Store tokens in localStorage
+      // Store tokens in safeLocalStorage
       tokenManager.setTokens(data.accessToken, data.refreshToken);
 
       // Store admin data
-      localStorage.setItem("admin_data", JSON.stringify(data.admin));
+      safeLocalStorage.setItem("admin_data", JSON.stringify(data.admin));
 
       // Update query cache
       queryClient.setQueryData(queryKeys.auth.user, data.admin);
@@ -86,7 +102,7 @@ export function useLogin() {
       // Check if email verification is required
       if (error.requiresVerification === true) {
         // Store email for verification
-        localStorage.setItem("pending_verification_email", variables.email);
+        safeLocalStorage.setItem("pending_verification_email", variables.email);
 
         // Show info message
         toast.info("Please check your email for verification code");
@@ -110,7 +126,7 @@ export function useLogout() {
   return useMutation({
     mutationFn: authService.logout,
     onSuccess: () => {
-      // Clear tokens and admin data from localStorage
+      // Clear tokens and admin data from safeLocalStorage
       tokenManager.clearTokens();
 
       // Clear all query cache
@@ -160,8 +176,8 @@ export function useUpdateProfile() {
       // Update admin data in cache
       queryClient.setQueryData(queryKeys.auth.user, response.admin);
 
-      // Update admin data in localStorage
-      localStorage.setItem("admin_data", JSON.stringify(response.admin));
+      // Update admin data in safeLocalStorage
+      safeLocalStorage.setItem("admin_data", JSON.stringify(response.admin));
 
       toast.success("Profile updated successfully");
     },
@@ -215,7 +231,7 @@ export function useRefreshToken() {
     mutationFn: (refreshToken: string) =>
       authService.refreshToken(refreshToken),
     onSuccess: (data) => {
-      // Update tokens in localStorage
+      // Update tokens in safeLocalStorage
       tokenManager.setTokens(data.accessToken, data.refreshToken);
     },
     onError: () => {
@@ -254,7 +270,7 @@ export function useStoredAdminData(): Admin | null {
   if (typeof window === "undefined") return null;
 
   try {
-    const adminData = localStorage.getItem("admin_data");
+    const adminData = safeLocalStorage.getItem("admin_data");
     return adminData ? JSON.parse(adminData) : null;
   } catch {
     return null;
@@ -271,14 +287,14 @@ export function useVerifyEmail() {
   return useMutation({
     mutationFn: (data: VerifyEmailRequest) => authService.verifyEmail(data),
     onSuccess: (data) => {
-      // Store tokens in localStorage
+      // Store tokens in safeLocalStorage
       tokenManager.setTokens(data.accessToken, data.refreshToken);
 
       // Store admin data
-      localStorage.setItem("admin_data", JSON.stringify(data.admin));
+      safeLocalStorage.setItem("admin_data", JSON.stringify(data.admin));
 
       // Clear pending verification email
-      localStorage.removeItem("pending_verification_email");
+      safeLocalStorage.removeItem("pending_verification_email");
 
       // Update query cache
       queryClient.setQueryData(queryKeys.auth.user, data.admin);
@@ -316,5 +332,5 @@ export function useResendVerification() {
  */
 export function usePendingVerificationEmail(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("pending_verification_email");
+  return safeLocalStorage.getItem("pending_verification_email");
 }

@@ -2,7 +2,6 @@ import type React from "react";
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/query-provider";
 import { Toaster } from "sonner";
@@ -39,7 +38,6 @@ export default function RootLayout({
           </QueryProvider>
         </Suspense>
         <Toaster position="top-right" richColors />
-        <Analytics />
       </body>
     </html>
   );

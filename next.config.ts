@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    unoptimized: true, // Allow all external images without hostname restrictions
     remotePatterns: [
       {
         protocol: "https",
@@ -39,12 +40,48 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "tehorafoodhub.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "tmaglobal.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "afrominimart.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "pp-new-node-medusa-prod-bucket.s3.us-east-1.amazonaws.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "addide.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "chomart.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
   // Ensure proper build configuration for production
-  ...(process.env.NODE_ENV === "production" && {
-    output: "standalone",
-  }),
+  // ...(process.env.NODE_ENV === "production" && {
+  //   output: "standalone",
+  // }),
 };
 
 export default nextConfig;

@@ -1,9 +1,46 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { ApiError } from "@/types/api";
 
+// SSR-safe safeLocalStorage utilities
+const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem(key);
+  },
+  setItem: (key: string, value: string): void => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(key, value);
+  },
+  removeItem: (key: string): void => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(key);
+  },
+  clear: (): void => {
+    if (typeof window === "undefined") return;
+    localStorage.clear();
+  },
+};
+
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-const API_TIMEOUT = 30000; // 30 seconds
+const getApiBaseUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!apiUrl) {
+    if (typeof window !== "undefined") {
+      console.error(
+        "NEXT_PUBLIC_API_URL is not set. Please configure it in your .env file."
+      );
+    }
+    throw new Error(
+      "NEXT_PUBLIC_API_URL environment variable is required but not set."
+    );
+  }
+
+  return apiUrl;
+};
+
+const API_BASE_URL = getApiBaseUrl();
+const API_TIMEOUT = 30000;
 
 // Create axios instance
 const axiosInstance: AxiosInstance = axios.create({
@@ -11,13 +48,14 @@ const axiosInstance: AxiosInstance = axios.create({
   timeout: API_TIMEOUT,
   headers: {
     "Content-Type": "application/json",
+    "ngrok-skip-browser-warning": "true", // Skip ngrok browser warning
   },
 });
 
 // Request interceptor to add auth token
 axiosInstance.interceptors.request.use(
   (config) => {
-    const accessToken = localStorage.getItem("access_token");
+    const accessToken = safeLocalStorage.getItem("access_token");
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -55,7 +93,7 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
 
-      const refreshToken = localStorage.getItem("refresh_token");
+      const refreshToken = safeLocalStorage.getItem("refresh_token");
 
       if (refreshToken) {
         try {
@@ -63,9 +101,9 @@ axiosInstance.interceptors.response.use(
           const { authService } = await import("@/services/auth.service");
           const response = await authService.refreshToken(refreshToken);
 
-          // Update tokens in localStorage
-          localStorage.setItem("access_token", response.accessToken);
-          localStorage.setItem("refresh_token", response.refreshToken);
+          // Update tokens in safeLocalStorage
+          safeLocalStorage.setItem("access_token", response.accessToken);
+          safeLocalStorage.setItem("refresh_token", response.refreshToken);
 
           // Retry the original request with new token
           originalRequest.headers.Authorization = `Bearer ${response.accessToken}`;
@@ -73,9 +111,9 @@ axiosInstance.interceptors.response.use(
         } catch (refreshError) {
           console.error("Token refresh failed:", refreshError);
           // Refresh failed, clear tokens and redirect to login
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
-          localStorage.removeItem("admin_data");
+          safeLocalStorage.removeItem("access_token");
+          safeLocalStorage.removeItem("refresh_token");
+          safeLocalStorage.removeItem("admin_data");
 
           // Only redirect if we're not already on the login page
           if (window.location.pathname !== "/login") {
@@ -84,9 +122,9 @@ axiosInstance.interceptors.response.use(
         }
       } else {
         // No refresh token, clear all auth data and redirect
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("admin_data");
+        safeLocalStorage.removeItem("access_token");
+        safeLocalStorage.removeItem("refresh_token");
+        safeLocalStorage.removeItem("admin_data");
 
         if (window.location.pathname !== "/login") {
           window.location.href = "/login";
@@ -126,6 +164,54 @@ export class ApiClient {
     config?: AxiosRequestConfig
   ): Promise<T> {
     const response = await this.client.put<T>(url, data, config);
+    return response.data;
+  }
+
+  // Post with FormData (for file uploads)
+  async postForm<T>(
+    url: string,
+    formData: FormData,
+    onProgress?: (progress: number) => void
+  ): Promise<T> {
+    const config: AxiosRequestConfig = {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(progress);
+        }
+      },
+    };
+
+    const response = await this.client.post<T>(url, formData, config);
+    return response.data;
+  }
+
+  // Put with FormData (for file uploads)
+  async putForm<T>(
+    url: string,
+    formData: FormData,
+    onProgress?: (progress: number) => void
+  ): Promise<T> {
+    const config: AxiosRequestConfig = {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(progress);
+        }
+      },
+    };
+
+    const response = await this.client.put<T>(url, formData, config);
     return response.data;
   }
 
@@ -174,22 +260,23 @@ export class ApiClient {
 // Token management utilities
 export const tokenManager = {
   setTokens: (accessToken: string, refreshToken: string) => {
-    localStorage.setItem("access_token", accessToken);
-    localStorage.setItem("refresh_token", refreshToken);
+    safeLocalStorage.setItem("access_token", accessToken);
+    safeLocalStorage.setItem("refresh_token", refreshToken);
   },
 
-  getAccessToken: () => localStorage.getItem("access_token"),
-  getRefreshToken: () => localStorage.getItem("refresh_token"),
+  getAccessToken: () => safeLocalStorage.getItem("access_token"),
+  getRefreshToken: () => safeLocalStorage.getItem("refresh_token"),
 
   clearTokens: () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("admin_data");
+    safeLocalStorage.removeItem("access_token");
+    safeLocalStorage.removeItem("refresh_token");
+    safeLocalStorage.removeItem("admin_data");
   },
 
   isAuthenticated: () => {
-    const accessToken = localStorage.getItem("access_token");
-    const refreshToken = localStorage.getItem("refresh_token");
+    if (typeof window === "undefined") return false;
+    const accessToken = safeLocalStorage.getItem("access_token");
+    const refreshToken = safeLocalStorage.getItem("refresh_token");
     return !!(accessToken && refreshToken);
   },
 };

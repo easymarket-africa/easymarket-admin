@@ -47,6 +47,7 @@ import {
   // Eye, // Unused
   // EyeOff, // Unused
 } from "lucide-react";
+import { Pagination } from "@/components/ui/pagination";
 import {
   useProducts,
   useProductMetrics,
@@ -89,6 +90,18 @@ export default function ProductsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isClient, setIsClient] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Reset to page 1 when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, categoryFilter]);
 
   // API hooks
   const {
@@ -99,6 +112,8 @@ export default function ProductsPage() {
   } = useProducts({
     search: searchTerm || undefined,
     category: categoryFilter === "all" ? undefined : categoryFilter,
+    page: currentPage,
+    limit: pageSize,
   });
 
   const {
@@ -116,18 +131,43 @@ export default function ProductsPage() {
   const bulkUploadMutation = useBulkUploadProducts();
 
   const products = productsData?.products || [];
+  const totalItems = productsData?.total || 0;
+  const totalPages = productsData?.totalPages || 1;
   const metrics = metricsData || {
     totalProducts: 0,
     activeProducts: 0,
     outOfStock: 0,
     totalValue: 0,
   };
-  const categories = categoriesData || [];
-  const vendors = vendorsData?.data || [];
+  const categories = Array.isArray(categoriesData) ? categoriesData : [];
+  const vendors = vendorsData?.vendors || [];
 
-  const handleCreateProduct = async (formData: CreateProductRequest) => {
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of table when page changes
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // Reset to first page when page size changes
+  };
+
+  const handleCreateProduct = async (
+    formData: CreateProductRequest | UpdateProductRequest | FormData
+  ) => {
     try {
-      await createProductMutation.mutateAsync(formData);
+      // In create context, we only accept CreateProductRequest or FormData
+      // UpdateProductRequest should not be passed here, but we handle it for type safety
+      if (formData instanceof FormData) {
+        await createProductMutation.mutateAsync(formData);
+      } else {
+        // Type guard: UpdateProductRequest has optional fields, CreateProductRequest has required fields
+        // For create, we expect all required fields, so we cast to CreateProductRequest
+        await createProductMutation.mutateAsync(
+          formData as CreateProductRequest
+        );
+      }
       setIsAddModalOpen(false);
     } catch (error: unknown) {
       // Error is handled by the mutation hook, but we can also handle it here as backup
@@ -142,7 +182,7 @@ export default function ProductsPage() {
 
   const handleUpdateProduct = async (
     id: number,
-    formData: UpdateProductRequest
+    formData: UpdateProductRequest | FormData
   ) => {
     try {
       await updateProductMutation.mutateAsync({ id, data: formData });
@@ -296,9 +336,9 @@ export default function ProductsPage() {
               <ProductForm
                 categories={categories}
                 vendors={vendors}
-                onSubmit={(data) =>
-                  handleCreateProduct(data as CreateProductRequest)
-                }
+                onSubmit={(data) => {
+                  handleCreateProduct(data);
+                }}
                 isLoading={createProductMutation.isPending}
                 onCancel={() => setIsAddModalOpen(false)}
               />
@@ -401,6 +441,8 @@ export default function ProductsPage() {
         <CardContent>
           {productsLoading ? (
             <TableSkeleton />
+          ) : !isClient ? (
+            <TableSkeleton />
           ) : (
             <Table>
               <TableHeader>
@@ -495,6 +537,17 @@ export default function ProductsPage() {
               </TableBody>
             </Table>
           )}
+          {!productsLoading && isClient && totalPages > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              pageSizeOptions={[10, 20, 50, 100]}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -504,7 +557,7 @@ export default function ProductsPage() {
           open={!!editingProduct}
           onOpenChange={() => setEditingProduct(null)}
         >
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Product</DialogTitle>
               <DialogDescription>Update product information</DialogDescription>
@@ -529,7 +582,9 @@ interface ProductFormProps {
   initialData?: Product;
   categories: string[];
   vendors: VendorDetails[];
-  onSubmit: (data: CreateProductRequest | UpdateProductRequest) => void;
+  onSubmit: (
+    data: CreateProductRequest | UpdateProductRequest | FormData
+  ) => void;
   isLoading: boolean;
   onCancel: () => void;
 }
@@ -550,25 +605,97 @@ function ProductForm({
     unit: initialData?.unit || "",
     stockQuantity: initialData?.stockQuantity || 0,
     sku: initialData?.sku || "",
-    weight: initialData?.weight || 0,
+    weight: initialData?.weight?.toString() || "",
     dimensions: initialData?.dimensions || "",
     tags: initialData?.tags?.join(", ") || "",
     isFeatured: initialData?.isFeatured || false,
     isActive: initialData?.isActive ?? true,
     vendorId: initialData?.vendor?.id || 0,
+    imageUrl: initialData?.imageUrl || "",
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    initialData?.imageUrl || null
+  );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file");
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size must be less than 5MB");
+        return;
+      }
+      setImageFile(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      // Clear URL input when file is selected
+      setFormData({ ...formData, imageUrl: "" });
+    }
+  };
+
+  const handleImageUrlChange = (url: string) => {
+    setFormData({ ...formData, imageUrl: url });
+    // Clear file when URL is entered
+    setImageFile(null);
+    setImagePreview(url || null);
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setFormData({ ...formData, imageUrl: "" });
+    setImagePreview(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const submitData = {
-      ...formData,
-      price: parseFloat(formData.price),
-      tags: formData.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-    };
-    onSubmit(submitData);
+
+    // Create FormData
+    const formDataToSend = new FormData();
+
+    // Add text fields
+    if (formData.name) formDataToSend.append("name", formData.name);
+    if (formData.description)
+      formDataToSend.append("description", formData.description);
+    if (formData.category) formDataToSend.append("category", formData.category);
+    if (formData.price) formDataToSend.append("price", formData.price);
+    if (formData.unit) formDataToSend.append("unit", formData.unit);
+    if (formData.stockQuantity !== undefined)
+      formDataToSend.append("stockQuantity", formData.stockQuantity.toString());
+    if (formData.sku) formDataToSend.append("sku", formData.sku);
+    if (formData.dimensions)
+      formDataToSend.append("dimensions", formData.dimensions);
+    if (formData.tags) formDataToSend.append("tags", formData.tags);
+    if (formData.weight) formDataToSend.append("weight", formData.weight);
+    formDataToSend.append("isFeatured", formData.isFeatured.toString());
+    formDataToSend.append("isActive", formData.isActive.toString());
+
+    // Handle vendorId
+    if (formData.vendorId === 0 || !formData.vendorId) {
+      formDataToSend.append("vendorId", "");
+    } else {
+      formDataToSend.append("vendorId", formData.vendorId.toString());
+    }
+
+    // Handle image: either file upload or URL
+    if (imageFile) {
+      // If file is selected, upload it as part of FormData
+      formDataToSend.append("image", imageFile);
+    } else if (formData.imageUrl && formData.imageUrl.trim() !== "") {
+      // If URL is provided, send it
+      formDataToSend.append("imageUrl", formData.imageUrl);
+    }
+
+    onSubmit(formDataToSend);
   };
 
   return (
@@ -592,6 +719,72 @@ function ProductForm({
             setFormData({ ...formData, description: e.target.value })
           }
         />
+      </div>
+
+      {/* Image Upload/URL Section */}
+      <div className="space-y-2">
+        <Label htmlFor="image">Product Image</Label>
+        <div className="space-y-3">
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="relative inline-block">
+              <Image
+                src={imagePreview}
+                alt="Product preview"
+                width={128}
+                height={128}
+                className="h-32 w-32 rounded-md object-cover border"
+                unoptimized={imagePreview.startsWith("data:")}
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                onClick={handleRemoveImage}
+              >
+                ×
+              </Button>
+            </div>
+          )}
+
+          {/* File Upload */}
+          <div className="space-y-2">
+            <Label htmlFor="image-file">Upload Image File</Label>
+            <Input
+              id="image-file"
+              type="file"
+              accept="image/*"
+              onChange={handleImageFileChange}
+              className="cursor-pointer"
+            />
+            <p className="text-xs text-muted-foreground">
+              Max size: 5MB. Supported formats: JPG, PNG, WebP
+            </p>
+          </div>
+
+          {/* OR Divider */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 border-t"></div>
+            <span className="text-sm text-muted-foreground">OR</span>
+            <div className="flex-1 border-t"></div>
+          </div>
+
+          {/* URL Input */}
+          <div className="space-y-2">
+            <Label htmlFor="image-url">Image URL</Label>
+            <Input
+              id="image-url"
+              type="url"
+              value={formData.imageUrl}
+              onChange={(e) => handleImageUrlChange(e.target.value)}
+              placeholder="https://example.com/image.jpg"
+            />
+            <p className="text-xs text-muted-foreground">
+              Enter a direct URL to an image
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -673,7 +866,7 @@ function ProductForm({
             onChange={(e) =>
               setFormData({
                 ...formData,
-                stockQuantity: parseInt(e.target.value),
+                stockQuantity: parseInt(e.target.value) || 0,
               })
             }
             required
@@ -686,6 +879,34 @@ function ProductForm({
             value={formData.sku}
             onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
             required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="weight">Weight (kg)</Label>
+          <Input
+            id="weight"
+            type="number"
+            step="0.01"
+            min="0"
+            value={formData.weight}
+            onChange={(e) =>
+              setFormData({ ...formData, weight: e.target.value })
+            }
+            placeholder="Optional"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="dimensions">Dimensions</Label>
+          <Input
+            id="dimensions"
+            value={formData.dimensions}
+            onChange={(e) =>
+              setFormData({ ...formData, dimensions: e.target.value })
+            }
+            placeholder="Optional"
           />
         </div>
       </div>

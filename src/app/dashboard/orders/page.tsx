@@ -5,7 +5,6 @@ export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-// import { Badge } from "@/components/ui/badge"; // Unused
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -50,26 +49,43 @@ import { TableSkeleton } from "@/components/loading-states";
 import { ErrorDisplay } from "@/components/error-display";
 import { Order } from "@/types/api";
 
-// const getStatusColor = (status: Order["status"]) => { // Unused
-//   switch (status) {
-//     case "pending":
-//       return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-//     case "confirmed":
-//       return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-//     case "preparing":
-//       return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
-//     case "ready_for_delivery":
-//       return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
-//     case "on_the_way":
-//       return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300";
-//     case "delivered":
-//       return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-//     case "cancelled":
-//       return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-//     default:
-//       return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-//   }
-// };
+const getStatusColor = (status: Order["status"]) => {
+  switch (status) {
+    case "pending":
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700";
+    case "confirmed":
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-700";
+    case "preparing":
+      return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300 border-orange-200 dark:border-orange-700";
+    case "ready_for_delivery":
+      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 border-purple-200 dark:border-purple-700";
+    case "on_the_way":
+      return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700";
+    case "delivered":
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 border-green-200 dark:border-green-700";
+    case "cancelled":
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 border-red-200 dark:border-red-700";
+    default:
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300 border-gray-200 dark:border-gray-700";
+  }
+};
+
+const getPaymentStatusColor = (paymentStatus: Order["paymentStatus"]) => {
+  switch (paymentStatus) {
+    case "pending":
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700";
+    case "paid":
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 border-green-200 dark:border-green-700";
+    case "successful":
+      return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700";
+    case "failed":
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 border-red-200 dark:border-red-700";
+    case "refunded":
+      return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 border-amber-200 dark:border-amber-700";
+    default:
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300 border-gray-200 dark:border-gray-700";
+  }
+};
 
 export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -340,7 +356,11 @@ export default function OrdersPage() {
                         }
                         disabled={updateStatusMutation.isPending}
                       >
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger
+                          className={`w-[140px] ${getStatusColor(
+                            order.status
+                          )}`}
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -367,7 +387,11 @@ export default function OrdersPage() {
                         }
                         disabled={updatePaymentStatusMutation.isPending}
                       >
-                        <SelectTrigger className="w-[120px]">
+                        <SelectTrigger
+                          className={`w-[120px] ${getPaymentStatusColor(
+                            order.paymentStatus
+                          )}`}
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

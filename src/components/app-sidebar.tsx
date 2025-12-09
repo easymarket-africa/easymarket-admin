@@ -13,6 +13,7 @@ import {
   LogOut,
   Package,
   Loader2,
+  Tags,
 } from "lucide-react";
 
 import {
@@ -54,6 +55,11 @@ const data = {
       title: "Products",
       url: "/dashboard/products",
       icon: Package,
+    },
+    {
+      title: "Categories",
+      url: "/dashboard/categories",
+      icon: Tags,
     },
     {
       title: "Agents",
@@ -126,7 +132,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       // Even if logout API fails, clear local data and redirect
       // This ensures user is logged out on the frontend
-      localStorage.clear();
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+      }
       sessionStorage.clear();
 
       // Optional: Show error message
