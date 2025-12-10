@@ -68,8 +68,7 @@ import {
   ExtendedError,
 } from "@/types/api";
 
-// Default product image - using an existing image as fallback
-const defaultProductImage = "/fresh-tomatoes.png";
+// No fallback image - show placeholder icon instead
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -461,23 +460,32 @@ export default function ProductsPage() {
                   <TableRow key={product.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Image
-                          src={product.imageUrl || defaultProductImage}
-                          alt={product.name}
-                          width={40}
-                          height={40}
-                          className="rounded-md object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            // Prevent infinite loop by checking if already using fallback
-                            if (
-                              target.src !== defaultProductImage &&
-                              !target.src.endsWith("fresh-tomatoes.png")
-                            ) {
-                              target.src = defaultProductImage;
-                            }
-                          }}
-                        />
+                        {product.imageUrl ? (
+                          <Image
+                            src={product.imageUrl}
+                            alt={product.name}
+                            width={40}
+                            height={40}
+                            className="rounded-md object-cover"
+                            onError={(e) => {
+                              // Hide image on error, show placeholder instead
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = "none";
+                              const placeholder = target.nextElementSibling;
+                              if (placeholder) {
+                                (placeholder as HTMLElement).style.display =
+                                  "flex";
+                              }
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className={`w-10 h-10 rounded-md bg-muted flex items-center justify-center ${
+                            product.imageUrl ? "hidden" : ""
+                          }`}
+                        >
+                          <Package className="h-5 w-5 text-muted-foreground" />
+                        </div>
                         <div>
                           <div className="font-medium">{product.name}</div>
                           <div className="text-sm text-muted-foreground">
