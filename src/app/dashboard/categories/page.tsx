@@ -55,8 +55,7 @@ import {
   UpdateCategoryRequest,
 } from "@/types/api";
 
-// Default category image
-const defaultCategoryImage = "/placeholder-category.png";
+// No fallback image - show placeholder icon instead
 
 const getStatusColor = (isActive: boolean) => {
   return isActive
@@ -271,17 +270,32 @@ export default function CategoriesPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="relative">
-                          <Image
-                            src={category.imageUrl || defaultCategoryImage}
-                            alt={category.name}
-                            width={40}
-                            height={40}
-                            className="rounded-md object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = defaultCategoryImage;
-                            }}
-                          />
+                          {category.imageUrl ? (
+                            <Image
+                              src={category.imageUrl}
+                              alt={category.name}
+                              width={40}
+                              height={40}
+                              className="rounded-md object-cover"
+                              onError={(e) => {
+                                // Hide image on error, show placeholder instead
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = "none";
+                                const placeholder = target.nextElementSibling;
+                                if (placeholder) {
+                                  (placeholder as HTMLElement).style.display =
+                                    "flex";
+                                }
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            className={`w-10 h-10 rounded-md bg-muted flex items-center justify-center ${
+                              category.imageUrl ? "hidden" : ""
+                            }`}
+                          >
+                            <Tags className="h-5 w-5 text-muted-foreground" />
+                          </div>
                           {category.color && (
                             <div
                               className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white"
