@@ -68,8 +68,8 @@ import {
   ExtendedError,
 } from "@/types/api";
 
-// Default product image
-const defaultProductImage = "/placeholder-product.png";
+// Default product image - using an existing image as fallback
+const defaultProductImage = "/fresh-tomatoes.png";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -469,7 +469,10 @@ export default function ProductsPage() {
                           className="rounded-md object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src = defaultProductImage;
+                            // Prevent infinite loop by checking if already using fallback
+                            if (target.src !== defaultProductImage && !target.src.endsWith('fresh-tomatoes.png')) {
+                              target.src = defaultProductImage;
+                            }
                           }}
                         />
                         <div>
