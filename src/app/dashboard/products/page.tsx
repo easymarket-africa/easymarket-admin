@@ -470,7 +470,10 @@ export default function ProductsPage() {
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             // Prevent infinite loop by checking if already using fallback
-                            if (target.src !== defaultProductImage && !target.src.endsWith('fresh-tomatoes.png')) {
+                            if (
+                              target.src !== defaultProductImage &&
+                              !target.src.endsWith("fresh-tomatoes.png")
+                            ) {
                               target.src = defaultProductImage;
                             }
                           }}
