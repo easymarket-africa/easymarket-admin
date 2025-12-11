@@ -212,7 +212,7 @@ export default function OrdersPage() {
                     <SelectItem value="ready_for_delivery">
                       Ready for Delivery
                     </SelectItem>
-                    <SelectItem value="on_the_way">On the Way</SelectItem>
+                    <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
                     <SelectItem value="delivered">Delivered</SelectItem>
                   </SelectContent>
                 </Select>
