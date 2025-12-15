@@ -59,7 +59,7 @@ const getStatusColor = (status: Order["status"]) => {
       return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300 border-orange-200 dark:border-orange-700";
     case "ready_for_delivery":
       return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 border-purple-200 dark:border-purple-700";
-    case "on_the_way":
+    case "out_for_delivery":
       return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700";
     case "delivered":
       return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 border-green-200 dark:border-green-700";
@@ -212,7 +212,9 @@ export default function OrdersPage() {
                     <SelectItem value="ready_for_delivery">
                       Ready for Delivery
                     </SelectItem>
-                    <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
+                    <SelectItem value="out_for_delivery">
+                      Out for Delivery
+                    </SelectItem>
                     <SelectItem value="delivered">Delivered</SelectItem>
                   </SelectContent>
                 </Select>
@@ -270,7 +272,9 @@ export default function OrdersPage() {
                 <SelectItem value="ready_for_delivery">
                   Ready for Delivery
                 </SelectItem>
-                <SelectItem value="on_the_way">On the Way</SelectItem>
+                <SelectItem value="out_for_delivery">
+                  Out for Delivery
+                </SelectItem>
                 <SelectItem value="delivered">Delivered</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
@@ -370,7 +374,9 @@ export default function OrdersPage() {
                           <SelectItem value="ready_for_delivery">
                             Ready for Delivery
                           </SelectItem>
-                          <SelectItem value="on_the_way">On the Way</SelectItem>
+                          <SelectItem value="out_for_delivery">
+                            Out for Delivery
+                          </SelectItem>
                           <SelectItem value="delivered">Delivered</SelectItem>
                           <SelectItem value="cancelled">Cancelled</SelectItem>
                         </SelectContent>
