@@ -246,7 +246,7 @@ export interface Order {
     | "confirmed"
     | "preparing"
     | "ready_for_delivery"
-    | "on_the_way"
+    | "out_for_delivery"
     | "delivered"
     | "cancelled";
   paymentStatus: "pending" | "paid" | "failed" | "refunded" | "successful";

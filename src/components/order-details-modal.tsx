@@ -62,7 +62,7 @@ export function OrderDetailsModal({
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
       case "preparing":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-      case "on_the_way":
+      case "out_for_delivery":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
       case "delivered":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
@@ -175,7 +175,9 @@ export function OrderDetailsModal({
                     <SelectItem value="ready_for_delivery">
                       Ready for Delivery
                     </SelectItem>
-                    <SelectItem value="on_the_way">On the Way</SelectItem>
+                    <SelectItem value="out_for_delivery">
+                      Out for Delivery
+                    </SelectItem>
                     <SelectItem value="delivered">Delivered</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
