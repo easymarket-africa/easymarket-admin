@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/tooltip";
 import { OrderDetailsModal } from "@/components/order-details-modal";
 import { WhatsAppShareModal } from "@/components/whatsapp-share-modal";
+import { ConfirmOrderDialog } from "@/components/confirm-order-dialog";
 import {
   useOrders,
   useAssignAgent,
@@ -94,6 +95,12 @@ export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrders, setSelectedOrders] = useState<Set<number>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingConfirmOrder, setPendingConfirmOrder] = useState<{
+    orderId: number;
+    orderNumber: string;
+  } | null>(null);
+  const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null);
 
   // API hooks
   const {
@@ -125,6 +132,50 @@ export default function OrdersPage() {
     }
   };
 
+  const handleStatusChange = (
+    orderId: number,
+    order: Order,
+    newStatus: string
+  ) => {
+    // If trying to set status to "confirmed" and no agent is assigned, show dialog
+    if (newStatus === "confirmed" && !order.assignedAgent) {
+      setPendingConfirmOrder({
+        orderId,
+        orderNumber: order.orderNumber,
+      });
+      setSelectedAgentId(null);
+      setConfirmDialogOpen(true);
+      return;
+    }
+
+    // Otherwise, proceed with normal status update
+    updateStatusMutation.mutate({
+      id: orderId,
+      data: { status: newStatus },
+    });
+  };
+
+  const handleConfirmOrder = () => {
+    if (!pendingConfirmOrder || !selectedAgentId) {
+      return;
+    }
+
+    // Update status to confirmed with agent assignment
+    updateStatusMutation.mutate(
+      {
+        id: pendingConfirmOrder.orderId,
+        data: { status: "confirmed", agentId: selectedAgentId },
+      },
+      {
+        onSuccess: () => {
+          setConfirmDialogOpen(false);
+          setPendingConfirmOrder(null);
+          setSelectedAgentId(null);
+        },
+      }
+    );
+  };
+
   const handleSelectOrder = (orderId: number) => {
     const newSelected = new Set(selectedOrders);
     if (newSelected.has(orderId)) {
@@ -147,11 +198,31 @@ export default function OrdersPage() {
   };
 
   const handleBulkStatusUpdate = (status: string) => {
+    // For bulk confirmation, we need to check each order
+    if (status === "confirmed") {
+      // Check if all selected orders have agents assigned
+      const ordersWithoutAgents = orders.filter(
+        (order: Order) => selectedOrders.has(order.id) && !order.assignedAgent
+      );
+
+      if (ordersWithoutAgents.length > 0) {
+        // Show error message - bulk confirmation requires agents
+        alert(
+          `Cannot bulk confirm orders. ${ordersWithoutAgents.length} selected order(s) do not have agents assigned. Please assign agents individually or confirm orders one at a time.`
+        );
+        return;
+      }
+    }
+
+    // Proceed with bulk update
     selectedOrders.forEach((orderId) => {
-      updateStatusMutation.mutate({
-        id: orderId,
-        data: { status },
-      });
+      const order = orders.find((o: Order) => o.id === orderId);
+      if (order) {
+        updateStatusMutation.mutate({
+          id: orderId,
+          data: { status },
+        });
+      }
     });
     setSelectedOrders(new Set());
     setShowBulkActions(false);
@@ -353,10 +424,7 @@ export default function OrdersPage() {
                       <Select
                         value={order.status}
                         onValueChange={(value: string) =>
-                          updateStatusMutation.mutate({
-                            id: order.id,
-                            data: { status: value },
-                          })
+                          handleStatusChange(order.id, order, value)
                         }
                         disabled={updateStatusMutation.isPending}
                       >
@@ -498,6 +566,19 @@ export default function OrdersPage() {
           order={whatsappOrder}
           open={!!whatsappOrder}
           onOpenChange={() => setWhatsappOrder(null)}
+        />
+      )}
+
+      {pendingConfirmOrder && (
+        <ConfirmOrderDialog
+          open={confirmDialogOpen}
+          onOpenChange={setConfirmDialogOpen}
+          orderNumber={pendingConfirmOrder.orderNumber}
+          agents={agents}
+          selectedAgentId={selectedAgentId}
+          onAgentChange={setSelectedAgentId}
+          onConfirm={handleConfirmOrder}
+          isPending={updateStatusMutation.isPending}
         />
       )}
     </div>
