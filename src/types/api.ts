@@ -278,6 +278,7 @@ export interface OrderFilters {
 
 export interface UpdateOrderStatusRequest {
   status: string;
+  agentId?: number;
   notes?: string;
 }
 

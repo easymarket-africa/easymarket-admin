@@ -32,6 +32,8 @@ import {
   useCancelOrder,
   useUpdatePaymentStatus,
 } from "@/hooks/use-orders";
+import { useAvailableAgents } from "@/hooks/use-agents";
+import { ConfirmOrderDialog } from "@/components/confirm-order-dialog";
 
 // Import types from API
 import { Order } from "@/types/api";
@@ -49,10 +51,14 @@ export function OrderDetailsModal({
 }: OrderDetailsModalProps) {
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null);
 
   const updateStatusMutation = useUpdateOrderStatus();
   const cancelOrderMutation = useCancelOrder();
   const updatePaymentStatusMutation = useUpdatePaymentStatus();
+  const { data: agentsData } = useAvailableAgents();
+  const agents = Array.isArray(agentsData?.agents) ? agentsData.agents : [];
 
   if (!order) return null;
 
@@ -76,10 +82,38 @@ export function OrderDetailsModal({
   };
 
   const handleStatusUpdate = (newStatus: string) => {
+    // If trying to set status to "confirmed" and no agent is assigned, show dialog
+    if (newStatus === "confirmed" && !order.assignedAgent) {
+      setSelectedAgentId(null);
+      setConfirmDialogOpen(true);
+      return;
+    }
+
+    // Otherwise, proceed with normal status update
     updateStatusMutation.mutate({
       id: order.id,
       data: { status: newStatus },
     });
+  };
+
+  const handleConfirmOrder = () => {
+    if (!selectedAgentId) {
+      return;
+    }
+
+    // Update status to confirmed with agent assignment
+    updateStatusMutation.mutate(
+      {
+        id: order.id,
+        data: { status: "confirmed", agentId: selectedAgentId },
+      },
+      {
+        onSuccess: () => {
+          setConfirmDialogOpen(false);
+          setSelectedAgentId(null);
+        },
+      }
+    );
   };
 
   const handlePaymentStatusUpdate = (newPaymentStatus: string) => {
@@ -403,6 +437,19 @@ Please check the admin panel for full details.`;
             )}
           </div>
         </div>
+
+        {confirmDialogOpen && (
+          <ConfirmOrderDialog
+            open={confirmDialogOpen}
+            onOpenChange={setConfirmDialogOpen}
+            orderNumber={order.orderNumber}
+            agents={agents}
+            selectedAgentId={selectedAgentId}
+            onAgentChange={setSelectedAgentId}
+            onConfirm={handleConfirmOrder}
+            isPending={updateStatusMutation.isPending}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
