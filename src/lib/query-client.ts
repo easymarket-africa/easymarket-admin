@@ -87,6 +87,13 @@ export const queryKeys = {
     metrics: () => [...queryKeys.vendors.all, "metrics"] as const,
   },
 
+  // Admin users (e.g. referral owner picker)
+  adminUsers: {
+    all: ["admin-users"] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.adminUsers.all, filters] as const,
+  },
+
   // Referrals
   referrals: {
     all: ["referrals"] as const,

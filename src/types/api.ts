@@ -81,6 +81,23 @@ export interface VendorsResponse {
   totalPages: number;
 }
 
+/** Admin user picker (`GET /admin/users`) */
+export interface AdminUserListItem {
+  id: number;
+  fullName: string;
+  email: string;
+  role: string;
+  status: string;
+}
+
+export interface AdminUsersResponse {
+  users: AdminUserListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 // Referrals specific response (supports multiple backend shapes)
 export interface ReferralCodesResponse {
   data?: ReferralCode[];
