@@ -62,6 +62,7 @@ import {
   useReferralUsages,
   useUpdateReferralCode,
 } from "@/hooks/use-referrals";
+import { useAdminUsers } from "@/hooks/use-admin-users";
 import {
   CreateReferralCodeRequest,
   ReferralCode,
@@ -189,6 +190,11 @@ export default function ReferralsPage() {
   const createMutation = useCreateReferralCode();
   const updateMutation = useUpdateReferralCode();
 
+  const { data: adminUsersData, isLoading: isAdminUsersLoading } = useAdminUsers(
+    { page: 1, limit: 200 },
+    { enabled: isCreateDialogOpen }
+  );
+
   const codeRows = codesData?.data || [];
   const usageRows = usagesData?.data || [];
   const rewardRows = rewardsData?.data || [];
@@ -218,18 +224,32 @@ export default function ReferralsPage() {
 
   const ownerOptions = useMemo(() => {
     const ownersMap = new Map<number, string>();
+    (adminUsersData?.users ?? []).forEach((u) => {
+      ownersMap.set(u.id, `${u.fullName} (${u.email})`);
+    });
     (overviewCodes?.data || []).forEach((code) => {
-      if (code.ownerId) {
+      if (code.ownerId && !ownersMap.has(code.ownerId)) {
         ownersMap.set(code.ownerId, code.ownerName || `User ${code.ownerId}`);
       }
     });
     (overviewRewards?.data || []).forEach((reward) => {
-      if (reward.userId) {
+      if (reward.userId && !ownersMap.has(reward.userId)) {
         ownersMap.set(reward.userId, reward.userName || `User ${reward.userId}`);
       }
     });
-    return Array.from(ownersMap.entries()).map(([id, name]) => ({ id, name }));
-  }, [overviewCodes, overviewRewards]);
+    return Array.from(ownersMap.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.id - b.id);
+  }, [adminUsersData, overviewCodes, overviewRewards]);
+
+  const ownerSelectValue = useMemo(() => {
+    if (!formValues.ownerId.trim()) return undefined;
+    const numeric = Number(formValues.ownerId);
+    if (!Number.isFinite(numeric) || numeric <= 0) return undefined;
+    return ownerOptions.some((o) => o.id === numeric)
+      ? String(numeric)
+      : undefined;
+  }, [formValues.ownerId, ownerOptions]);
 
   const resetForm = () => {
     setFormValues(emptyFormValues);
@@ -368,14 +388,14 @@ export default function ReferralsPage() {
             <form onSubmit={handleSubmitCode} className="space-y-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="owner">Owner</Label>
+                  <Label htmlFor="owner-id-manual">Owner</Label>
                   <Select
-                    value={formValues.ownerId}
+                    value={ownerSelectValue}
                     onValueChange={(value) =>
                       setFormValues((prev) => ({ ...prev, ownerId: value }))
                     }
                   >
-                    <SelectTrigger id="owner">
+                    <SelectTrigger id="owner-select" className="w-full min-w-0">
                       <SelectValue placeholder="Select owner" />
                     </SelectTrigger>
                     <SelectContent>
@@ -384,9 +404,20 @@ export default function ReferralsPage() {
                           {owner.name} (#{owner.id})
                         </SelectItem>
                       ))}
+                      {ownerOptions.length === 0 && !isAdminUsersLoading ? (
+                        <SelectItem value="__no_users__" disabled>
+                          No users in list — type ID below
+                        </SelectItem>
+                      ) : null}
                     </SelectContent>
                   </Select>
+                  {isAdminUsersLoading ? (
+                    <p className="text-muted-foreground text-xs">
+                      Loading users…
+                    </p>
+                  ) : null}
                   <Input
+                    id="owner-id-manual"
                     placeholder="Or enter owner ID manually"
                     value={formValues.ownerId}
                     onChange={(e) =>
@@ -395,6 +426,7 @@ export default function ReferralsPage() {
                         ownerId: e.target.value.replace(/\D/g, ""),
                       }))
                     }
+                    autoComplete="off"
                   />
                 </div>
                 <div className="space-y-2">
