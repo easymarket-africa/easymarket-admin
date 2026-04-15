@@ -87,6 +87,20 @@ export const queryKeys = {
     metrics: () => [...queryKeys.vendors.all, "metrics"] as const,
   },
 
+  // Referrals
+  referrals: {
+    all: ["referrals"] as const,
+    codes: () => [...queryKeys.referrals.all, "codes"] as const,
+    codeList: (filters: Record<string, unknown>) =>
+      [...queryKeys.referrals.codes(), filters] as const,
+    usages: () => [...queryKeys.referrals.all, "usages"] as const,
+    usageList: (filters: Record<string, unknown>) =>
+      [...queryKeys.referrals.usages(), filters] as const,
+    rewards: () => [...queryKeys.referrals.all, "rewards"] as const,
+    rewardList: (filters: Record<string, unknown>) =>
+      [...queryKeys.referrals.rewards(), filters] as const,
+  },
+
   // Analytics
   analytics: {
     all: ["analytics"] as const,

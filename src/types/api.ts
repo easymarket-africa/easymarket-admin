@@ -81,6 +81,34 @@ export interface VendorsResponse {
   totalPages: number;
 }
 
+// Referrals specific response (supports multiple backend shapes)
+export interface ReferralCodesResponse {
+  data?: ReferralCode[];
+  codes?: ReferralCode[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages?: number;
+}
+
+export interface ReferralUsagesResponse {
+  data?: ReferralUsage[];
+  usages?: ReferralUsage[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages?: number;
+}
+
+export interface ReferralRewardsResponse {
+  data?: ReferralReward[];
+  rewards?: ReferralReward[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages?: number;
+}
+
 export interface ApiError {
   message: string;
   code?: string;
@@ -506,6 +534,92 @@ export interface UpdateVendorRequest {
   bankAccount?: string;
   status?: string;
   isActive?: boolean;
+}
+
+// Referral Types
+export type ReferralCodeOwnerType = "INFLUENCER" | "USER";
+export type ReferralDiscountType = "PERCENTAGE" | "FIXED";
+
+export interface ReferralCode {
+  id: number;
+  code: string;
+  ownerId: number;
+  ownerName?: string;
+  type: ReferralCodeOwnerType;
+  discountType: ReferralDiscountType;
+  discountValue: number;
+  maxUsage?: number | null;
+  usageCount: number;
+  isActive: boolean;
+  expiresAt?: string | null;
+  createdAt: string;
+}
+
+export interface ReferralUsage {
+  id: number;
+  referralCodeId: number;
+  referralCode?: string;
+  usedByUserId: number;
+  usedByUserName?: string;
+  orderId: number;
+  discountApplied: number;
+  rewardGrantedToReferrer: number;
+  createdAt: string;
+}
+
+export interface ReferralReward {
+  id: number;
+  userId: number;
+  userName?: string;
+  totalEarned: number;
+  totalRedeemed: number;
+  balance: number;
+  lastUpdated?: string;
+}
+
+export interface ReferralCodeFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: "active" | "inactive";
+  type?: ReferralCodeOwnerType;
+  [key: string]: unknown;
+}
+
+export interface ReferralUsageFilters {
+  page?: number;
+  limit?: number;
+  code?: string;
+  userId?: number;
+  startDate?: string;
+  endDate?: string;
+  [key: string]: unknown;
+}
+
+export interface ReferralRewardFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  [key: string]: unknown;
+}
+
+export interface CreateReferralCodeRequest {
+  ownerId: number;
+  code: string;
+  type: ReferralCodeOwnerType;
+  discountType: ReferralDiscountType;
+  discountValue: number;
+  maxUsage?: number;
+  isActive?: boolean;
+  expiresAt?: string;
+}
+
+export interface UpdateReferralCodeRequest {
+  isActive?: boolean;
+  expiresAt?: string;
+  discountType?: ReferralDiscountType;
+  discountValue?: number;
+  maxUsage?: number;
 }
 
 // Analytics Types
