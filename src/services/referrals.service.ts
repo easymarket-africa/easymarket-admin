@@ -18,7 +18,7 @@ import {
  * Handles all referral-related API calls
  */
 export class ReferralsService {
-  private readonly basePath = "/referrals";
+  private readonly basePath = "/admin/referrals";
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null;
@@ -91,7 +91,8 @@ export class ReferralsService {
     filters: ReferralCodeFilters = {}
   ): Promise<ReferralCodesResponse> {
     const queryString = this.buildQueryParams(filters);
-    const url = queryString ? `${this.basePath}?${queryString}` : this.basePath;
+    const codesPath = `${this.basePath}/codes`;
+    const url = queryString ? `${codesPath}?${queryString}` : codesPath;
 
     const response = await apiClient.get<unknown>(url);
     const responseObject = this.isRecord(response) ? response : {};
@@ -121,7 +122,10 @@ export class ReferralsService {
   async createReferralCode(
     data: CreateReferralCodeRequest
   ): Promise<ReferralCode> {
-    const response = await apiClient.post<Partial<ReferralCode>>(this.basePath, data);
+    const response = await apiClient.post<Partial<ReferralCode>>(
+      `${this.basePath}/codes`,
+      data
+    );
     return this.normalizeCode(response);
   }
 
@@ -129,8 +133,8 @@ export class ReferralsService {
     id: number,
     data: UpdateReferralCodeRequest
   ): Promise<ReferralCode> {
-    const response = await apiClient.patch<Partial<ReferralCode>>(
-      `${this.basePath}/${id}`,
+    const response = await apiClient.put<Partial<ReferralCode>>(
+      `${this.basePath}/codes/${id}`,
       data
     );
     return this.normalizeCode(response);
