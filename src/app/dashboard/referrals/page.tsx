@@ -94,7 +94,9 @@ const emptyFormValues: ReferralCodeFormValues = {
 };
 
 function getCodeStatusBadge(isActive: boolean, expiresAt?: string | null) {
-  const isExpired = expiresAt ? new Date(expiresAt).getTime() < Date.now() : false;
+  const isExpired = expiresAt
+    ? new Date(expiresAt).getTime() < Date.now()
+    : false;
   if (!isActive) {
     return <span className="text-xs text-red-600">Inactive</span>;
   }
@@ -108,8 +110,12 @@ export default function ReferralsPage() {
   const [activeTab, setActiveTab] = useState("overview");
 
   const [codeSearch, setCodeSearch] = useState("");
-  const [codeStatus, setCodeStatus] = useState<"active" | "inactive" | "all">("all");
-  const [codeType, setCodeType] = useState<ReferralCodeOwnerType | "all">("all");
+  const [codeStatus, setCodeStatus] = useState<"active" | "inactive" | "all">(
+    "all",
+  );
+  const [codeType, setCodeType] = useState<ReferralCodeOwnerType | "all">(
+    "all",
+  );
   const [codesPage, setCodesPage] = useState(1);
   const [codesLimit, setCodesLimit] = useState(10);
 
@@ -172,10 +178,11 @@ export default function ReferralsPage() {
   } = useReferralRewards(rewardFilters);
 
   // Lightweight overview queries for cards/charts.
-  const { data: overviewCodes, isLoading: isOverviewCodesLoading } = useReferralCodes({
-    page: 1,
-    limit: 200,
-  });
+  const { data: overviewCodes, isLoading: isOverviewCodesLoading } =
+    useReferralCodes({
+      page: 1,
+      limit: 200,
+    });
   const { data: overviewUsages, isLoading: isOverviewUsagesLoading } =
     useReferralUsages({
       page: 1,
@@ -190,10 +197,8 @@ export default function ReferralsPage() {
   const createMutation = useCreateReferralCode();
   const updateMutation = useUpdateReferralCode();
 
-  const { data: adminUsersData, isLoading: isAdminUsersLoading } = useAdminUsers(
-    { page: 1, limit: 200 },
-    { enabled: isCreateDialogOpen }
-  );
+  const { data: adminUsersData, isLoading: isAdminUsersLoading } =
+    useAdminUsers({ page: 1, limit: 200 }, { enabled: isCreateDialogOpen });
 
   const codeRows = codesData?.data || [];
   const usageRows = usagesData?.data || [];
@@ -201,7 +206,10 @@ export default function ReferralsPage() {
 
   const totalRewardsGenerated = useMemo(() => {
     const rewards = overviewRewards?.data || [];
-    return rewards.reduce((sum, item) => sum + Number(item.totalEarned || 0), 0);
+    return rewards.reduce(
+      (sum, item) => sum + Number(item.totalEarned || 0),
+      0,
+    );
   }, [overviewRewards]);
 
   const usageChartData = useMemo(() => {
@@ -234,7 +242,10 @@ export default function ReferralsPage() {
     });
     (overviewRewards?.data || []).forEach((reward) => {
       if (reward.userId && !ownersMap.has(reward.userId)) {
-        ownersMap.set(reward.userId, reward.userName || `User ${reward.userId}`);
+        ownersMap.set(
+          reward.userId,
+          reward.userName || `User ${reward.userId}`,
+        );
       }
     });
     return Array.from(ownersMap.entries())
@@ -306,7 +317,9 @@ export default function ReferralsPage() {
           isActive: formValues.isActive,
           discountType: formValues.discountType,
           discountValue: Number(formValues.discountValue),
-          maxUsage: formValues.maxUsage ? Number(formValues.maxUsage) : undefined,
+          maxUsage: formValues.maxUsage
+            ? Number(formValues.maxUsage)
+            : undefined,
           expiresAt: formValues.expiresAt
             ? new Date(formValues.expiresAt).toISOString()
             : undefined,
@@ -319,7 +332,9 @@ export default function ReferralsPage() {
           type: formValues.type,
           discountType: formValues.discountType,
           discountValue: Number(formValues.discountValue),
-          maxUsage: formValues.maxUsage ? Number(formValues.maxUsage) : undefined,
+          maxUsage: formValues.maxUsage
+            ? Number(formValues.maxUsage)
+            : undefined,
           expiresAt: formValues.expiresAt
             ? new Date(formValues.expiresAt).toISOString()
             : undefined,
@@ -468,7 +483,10 @@ export default function ReferralsPage() {
                   <Select
                     value={formValues.discountType}
                     onValueChange={(value: ReferralDiscountType) =>
-                      setFormValues((prev) => ({ ...prev, discountType: value }))
+                      setFormValues((prev) => ({
+                        ...prev,
+                        discountType: value,
+                      }))
                     }
                   >
                     <SelectTrigger>
@@ -565,13 +583,15 @@ export default function ReferralsPage() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={createMutation.isPending || updateMutation.isPending}
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending
+                  }
                 >
                   {createMutation.isPending || updateMutation.isPending
                     ? "Saving..."
                     : editingCode
-                    ? "Update Code"
-                    : "Create Code"}
+                      ? "Update Code"
+                      : "Create Code"}
                 </Button>
               </div>
             </form>
@@ -589,7 +609,9 @@ export default function ReferralsPage() {
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
-            {isOverviewCodesLoading || isOverviewUsagesLoading || isOverviewRewardsLoading ? (
+            {isOverviewCodesLoading ||
+            isOverviewUsagesLoading ||
+            isOverviewRewardsLoading ? (
               <>
                 <StatsCardSkeleton />
                 <StatsCardSkeleton />
@@ -657,7 +679,11 @@ export default function ReferralsPage() {
                       <XAxis dataKey="date" />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="usageCount" fill="#10b981" radius={[4, 4, 0, 0]} />
+                      <Bar
+                        dataKey="usageCount"
+                        fill="#10b981"
+                        radius={[4, 4, 0, 0]}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
@@ -700,7 +726,9 @@ export default function ReferralsPage() {
         </TabsContent>
 
         <TabsContent value="codes" className="space-y-4">
-          {codesError && <ErrorAlert error={codesError} onRetry={() => refetchCodes()} />}
+          {codesError && (
+            <ErrorAlert error={codesError} onRetry={() => refetchCodes()} />
+          )}
           <Card>
             <CardHeader>
               <div className="grid gap-3 md:grid-cols-4">
@@ -801,7 +829,9 @@ export default function ReferralsPage() {
                             {code.usageCount}
                             {code.maxUsage ? ` / ${code.maxUsage}` : ""}
                           </TableCell>
-                          <TableCell>{getCodeStatusBadge(code.isActive, code.expiresAt)}</TableCell>
+                          <TableCell>
+                            {getCodeStatusBadge(code.isActive, code.expiresAt)}
+                          </TableCell>
                           <TableCell>
                             {code.expiresAt
                               ? format(new Date(code.expiresAt), "MMM d, yyyy")
@@ -848,7 +878,9 @@ export default function ReferralsPage() {
         </TabsContent>
 
         <TabsContent value="usages" className="space-y-4">
-          {usagesError && <ErrorAlert error={usagesError} onRetry={() => refetchUsages()} />}
+          {usagesError && (
+            <ErrorAlert error={usagesError} onRetry={() => refetchUsages()} />
+          )}
           <Card>
             <CardHeader>
               <div className="grid gap-3 md:grid-cols-5">
@@ -925,17 +957,26 @@ export default function ReferralsPage() {
                             {usage.referralCode || `#${usage.referralCodeId}`}
                           </TableCell>
                           <TableCell>
-                            {usage.usedByUserName || `User #${usage.usedByUserId}`}
+                            {usage.usedByUserName ||
+                              `User #${usage.usedByUserId}`}
                           </TableCell>
                           <TableCell>#{usage.orderId}</TableCell>
-                          <TableCell>₦{Number(usage.discountApplied).toLocaleString()}</TableCell>
                           <TableCell>
-                            ₦{Number(usage.rewardGrantedToReferrer).toLocaleString()}
+                            ₦{Number(usage.discountApplied).toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            ₦
+                            {Number(
+                              usage.rewardGrantedToReferrer,
+                            ).toLocaleString()}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1 text-sm">
                               <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
-                              {format(new Date(usage.createdAt), "MMM d, yyyy h:mm a")}
+                              {format(
+                                new Date(usage.createdAt),
+                                "MMM d, yyyy h:mm a",
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1006,14 +1047,21 @@ export default function ReferralsPage() {
                           <TableCell className="font-medium">
                             {reward.userName || `User #${reward.userId}`}
                           </TableCell>
-                          <TableCell>₦{reward.totalEarned.toLocaleString()}</TableCell>
-                          <TableCell>₦{reward.totalRedeemed.toLocaleString()}</TableCell>
+                          <TableCell>
+                            ₦{reward.totalEarned.toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            ₦{reward.totalRedeemed.toLocaleString()}
+                          </TableCell>
                           <TableCell className="font-semibold">
                             ₦{reward.balance.toLocaleString()}
                           </TableCell>
                           <TableCell>
                             {reward.lastUpdated
-                              ? format(new Date(reward.lastUpdated), "MMM d, yyyy")
+                              ? format(
+                                  new Date(reward.lastUpdated),
+                                  "MMM d, yyyy",
+                                )
                               : "-"}
                           </TableCell>
                           <TableCell>
