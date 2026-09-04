@@ -508,7 +508,7 @@ export interface VendorDetails {
   isActive: boolean;
   productsCount: number;
   ordersCount: number;
-  rating: number;
+  rating: string;
   createdAt: string;
   updatedAt: string;
 }
