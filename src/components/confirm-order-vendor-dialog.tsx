@@ -84,18 +84,12 @@ export function ConfirmOrderVendorDialog({
                 <SelectValue placeholder="Choose a vendor..." />
               </SelectTrigger>
               <SelectContent>
-                {activeVendors.length === 0 ? (
-                  <SelectItem value="" disabled>
-                    No active vendors
+                {activeVendors.map((vendor) => (
+                  <SelectItem key={vendor.id} value={vendor.id.toString()}>
+                    {vendor.businessName}
+                    {vendor.address && ` — ${vendor.address}`}
                   </SelectItem>
-                ) : (
-                  activeVendors.map((vendor) => (
-                    <SelectItem key={vendor.id} value={vendor.id.toString()}>
-                      {vendor.businessName}
-                      {vendor.address && ` — ${vendor.address}`}
-                    </SelectItem>
-                  ))
-                )}
+                ))}
               </SelectContent>
             </Select>
             {activeVendors.length === 0 && (
