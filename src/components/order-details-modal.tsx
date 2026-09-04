@@ -32,6 +32,8 @@ import {
   useCancelOrder,
   useUpdatePaymentStatus,
 } from "@/hooks/use-orders";
+import { useVendors } from "@/hooks/use-vendors";
+import { ConfirmOrderVendorDialog } from "@/components/confirm-order-vendor-dialog";
 
 // Import types from API
 import { Order } from "@/types/api";
@@ -49,10 +51,16 @@ export function OrderDetailsModal({
 }: OrderDetailsModalProps) {
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedVendorId, setSelectedVendorId] = useState<number | null>(
+    null
+  );
 
   const updateStatusMutation = useUpdateOrderStatus();
   const cancelOrderMutation = useCancelOrder();
   const updatePaymentStatusMutation = useUpdatePaymentStatus();
+  const { data: vendorsData } = useVendors({ limit: 100, status: "active" });
+  const vendors = vendorsData?.vendors || [];
 
   if (!order) return null;
 
@@ -76,12 +84,38 @@ export function OrderDetailsModal({
   };
 
   const handleStatusUpdate = (newStatus: string) => {
-    // Agent assignment is no longer required to confirm an order — in-house
-    // agents are a fallback that automatic dispatch reaches for on its own.
+    // A pickup vendor is required to confirm an order — no product carries
+    // vendor data, so this is the only way the delivery partner learns
+    // where to collect from. Agent assignment stays optional/automatic.
+    if (newStatus === "confirmed" && !order.pickupVendor) {
+      setSelectedVendorId(null);
+      setConfirmDialogOpen(true);
+      return;
+    }
+
     updateStatusMutation.mutate({
       id: order.id,
       data: { status: newStatus },
     });
+  };
+
+  const handleConfirmOrder = () => {
+    if (!selectedVendorId) {
+      return;
+    }
+
+    updateStatusMutation.mutate(
+      {
+        id: order.id,
+        data: { status: "confirmed", vendorId: selectedVendorId },
+      },
+      {
+        onSuccess: () => {
+          setConfirmDialogOpen(false);
+          setSelectedVendorId(null);
+        },
+      }
+    );
   };
 
   const handlePaymentStatusUpdate = (newPaymentStatus: string) => {
@@ -355,6 +389,30 @@ export function OrderDetailsModal({
 
           <Separator />
 
+          {/* Pickup Vendor */}
+          <div className="space-y-3">
+            <h3 className="font-semibold">Pickup Vendor</h3>
+            {order.pickupVendor ? (
+              <div>
+                <p className="font-medium">
+                  {order.pickupVendor.businessName}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {order.pickupVendor.address}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Phone: {order.pickupVendor.phoneNumber}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No pickup vendor selected yet
+              </p>
+            )}
+          </div>
+
+          <Separator />
+
           {/* Agent Information */}
           <div className="space-y-3">
             <h3 className="font-semibold">Assigned Agent</h3>
@@ -405,6 +463,19 @@ Please check the admin panel for full details.`;
             )}
           </div>
         </div>
+
+        {confirmDialogOpen && (
+          <ConfirmOrderVendorDialog
+            open={confirmDialogOpen}
+            onOpenChange={setConfirmDialogOpen}
+            orderNumber={order.orderNumber}
+            vendors={vendors}
+            selectedVendorId={selectedVendorId}
+            onVendorChange={setSelectedVendorId}
+            onConfirm={handleConfirmOrder}
+            isPending={updateStatusMutation.isPending}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/tooltip";
 import { OrderDetailsModal } from "@/components/order-details-modal";
 import { WhatsAppShareModal } from "@/components/whatsapp-share-modal";
+import { ConfirmOrderVendorDialog } from "@/components/confirm-order-vendor-dialog";
 import {
   useOrders,
   useAssignAgent,
@@ -45,6 +46,7 @@ import {
   useUpdatePaymentStatus,
 } from "@/hooks/use-orders";
 import { useAvailableAgents } from "@/hooks/use-agents";
+import { useVendors } from "@/hooks/use-vendors";
 import { TableSkeleton } from "@/components/loading-states";
 import { ErrorDisplay } from "@/components/error-display";
 import { Order } from "@/types/api";
@@ -94,6 +96,14 @@ export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrders, setSelectedOrders] = useState<Set<number>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingConfirmOrder, setPendingConfirmOrder] = useState<{
+    orderId: number;
+    orderNumber: string;
+  } | null>(null);
+  const [selectedVendorId, setSelectedVendorId] = useState<number | null>(
+    null
+  );
 
   // API hooks
   const {
@@ -107,12 +117,14 @@ export default function OrdersPage() {
   });
 
   const { data: agentsData } = useAvailableAgents();
+  const { data: vendorsData } = useVendors({ limit: 100, status: "active" });
   const assignAgentMutation = useAssignAgent();
   const updateStatusMutation = useUpdateOrderStatus();
   const updatePaymentStatusMutation = useUpdatePaymentStatus();
 
   const orders = ordersData?.orders || [];
   const agents = Array.isArray(agentsData?.agents) ? agentsData.agents : [];
+  const vendors = vendorsData?.vendors || [];
 
   const handleAssignAgent = async (orderId: number, agentId: number) => {
     try {
@@ -130,14 +142,43 @@ export default function OrdersPage() {
     order: Order,
     newStatus: string
   ) => {
-    // Agent assignment is no longer required to confirm an order — in-house
-    // agents are a fallback that automatic dispatch reaches for on its own.
-    // Use the per-row "Assign agent" action if you want to pre-assign one.
-    void order;
+    // A pickup vendor is required to confirm an order — no product carries
+    // vendor data, so this is the only way the delivery partner learns
+    // where to collect from. Agent assignment stays optional/automatic.
+    if (newStatus === "confirmed" && !order.pickupVendor) {
+      setPendingConfirmOrder({
+        orderId,
+        orderNumber: order.orderNumber,
+      });
+      setSelectedVendorId(null);
+      setConfirmDialogOpen(true);
+      return;
+    }
+
     updateStatusMutation.mutate({
       id: orderId,
       data: { status: newStatus },
     });
+  };
+
+  const handleConfirmOrder = () => {
+    if (!pendingConfirmOrder || !selectedVendorId) {
+      return;
+    }
+
+    updateStatusMutation.mutate(
+      {
+        id: pendingConfirmOrder.orderId,
+        data: { status: "confirmed", vendorId: selectedVendorId },
+      },
+      {
+        onSuccess: () => {
+          setConfirmDialogOpen(false);
+          setPendingConfirmOrder(null);
+          setSelectedVendorId(null);
+        },
+      }
+    );
   };
 
   const handleSelectOrder = (orderId: number) => {
@@ -162,6 +203,19 @@ export default function OrdersPage() {
   };
 
   const handleBulkStatusUpdate = (status: string) => {
+    if (status === "confirmed") {
+      const ordersWithoutVendor = orders.filter(
+        (order: Order) => selectedOrders.has(order.id) && !order.pickupVendor
+      );
+
+      if (ordersWithoutVendor.length > 0) {
+        alert(
+          `Cannot bulk confirm orders. ${ordersWithoutVendor.length} selected order(s) do not have a pickup vendor selected. Please confirm orders one at a time to choose a vendor for each.`
+        );
+        return;
+      }
+    }
+
     // Proceed with bulk update
     selectedOrders.forEach((orderId) => {
       const order = orders.find((o: Order) => o.id === orderId);
@@ -517,6 +571,18 @@ export default function OrdersPage() {
         />
       )}
 
+      {pendingConfirmOrder && (
+        <ConfirmOrderVendorDialog
+          open={confirmDialogOpen}
+          onOpenChange={setConfirmDialogOpen}
+          orderNumber={pendingConfirmOrder.orderNumber}
+          vendors={vendors}
+          selectedVendorId={selectedVendorId}
+          onVendorChange={setSelectedVendorId}
+          onConfirm={handleConfirmOrder}
+          isPending={updateStatusMutation.isPending}
+        />
+      )}
     </div>
   );
 }

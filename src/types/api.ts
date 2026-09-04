@@ -303,6 +303,12 @@ export interface Order {
   tax: number;
   total: string;
   assignedAgent?: Agent;
+  pickupVendor?: {
+    id: number;
+    businessName: string;
+    address: string;
+    phoneNumber: string;
+  };
   createdAt: string;
   updatedAt: string;
   notes?: string;
@@ -324,6 +330,7 @@ export interface OrderFilters {
 export interface UpdateOrderStatusRequest {
   status: string;
   agentId?: number;
+  vendorId?: number;
   notes?: string;
 }
 
