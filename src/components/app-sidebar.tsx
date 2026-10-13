@@ -16,6 +16,7 @@ import {
   Tags,
   Gift,
   Megaphone,
+  Ticket,
 } from "lucide-react";
 
 import {
@@ -87,6 +88,11 @@ const data = {
       title: "Referrals",
       url: "/dashboard/referrals",
       icon: Gift,
+    },
+    {
+      title: "Coupons",
+      url: "/dashboard/coupons",
+      icon: Ticket,
     },
     {
       title: "Settings",
