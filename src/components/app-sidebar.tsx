@@ -15,6 +15,7 @@ import {
   Loader2,
   Tags,
   Gift,
+  Megaphone,
 } from "lucide-react";
 
 import {
@@ -76,6 +77,11 @@ const data = {
       title: "Analytics",
       url: "/dashboard/analytics",
       icon: BarChart3,
+    },
+    {
+      title: "Campaigns",
+      url: "/dashboard/campaigns",
+      icon: Megaphone,
     },
     {
       title: "Referrals",
