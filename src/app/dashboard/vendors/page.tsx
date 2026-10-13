@@ -321,7 +321,7 @@ export default function VendorsPage() {
                     <TableCell>
                       <div className="flex items-center">
                         <span className="text-sm font-medium">
-                          {vendor.rating.toFixed(1)}
+                          {Number(vendor.rating).toFixed(1)}
                         </span>
                         <span className="text-yellow-400 ml-1">★</span>
                       </div>

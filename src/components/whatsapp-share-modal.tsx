@@ -68,9 +68,9 @@ ${order.items
 💰 Subtotal: ₦${parseFloat(order.subtotal).toLocaleString()}
 🚚 Delivery Fee: ₦${parseFloat(order.deliveryFee).toLocaleString()}
 💰 Total: ₦${parseFloat(order.total).toLocaleString()}
-📍 Address: ${order.deliveryAddress.street}, ${order.deliveryAddress.city}, ${
-    order.deliveryAddress.state
-  }, ${order.deliveryAddress.country}
+📍 Address: ${order.deliveryAddress.address}${
+    order.deliveryAddress.landmark ? ` (near ${order.deliveryAddress.landmark})` : ""
+  }
 
 Status: ${order.status.replace("_", " ").toUpperCase()}
 Payment: ${order.paymentStatus.toUpperCase()}
