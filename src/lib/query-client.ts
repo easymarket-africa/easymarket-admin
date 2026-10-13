@@ -125,9 +125,31 @@ export const queryKeys = {
     billing: () => [...queryKeys.settings.all, "billing"] as const,
   },
 
+  // Campaigns
+  campaigns: {
+    all: ["campaigns"] as const,
+    lists: () => [...queryKeys.campaigns.all, "list"] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.campaigns.lists(), filters] as const,
+    details: () => [...queryKeys.campaigns.all, "detail"] as const,
+    detail: (id: number) => [...queryKeys.campaigns.details(), id] as const,
+    recipients: (id: number) =>
+      [...queryKeys.campaigns.detail(id), "recipients"] as const,
+    triggers: () => [...queryKeys.campaigns.all, "triggers"] as const,
+  },
+
   // WhatsApp
   whatsapp: {
     all: ["whatsapp"] as const,
     groups: () => [...queryKeys.whatsapp.all, "groups"] as const,
+  },
+
+  coupons: {
+    all: ["coupons"] as const,
+    lists: () => [...queryKeys.coupons.all, "list"] as const,
+    list: (filters: Record<string, unknown>) => [...queryKeys.coupons.lists(), filters] as const,
+    details: () => [...queryKeys.coupons.all, "detail"] as const,
+    detail: (id: number) => [...queryKeys.coupons.details(), id] as const,
+    redemptions: (id: number) => [...queryKeys.coupons.detail(id), "redemptions"] as const,
   },
 };

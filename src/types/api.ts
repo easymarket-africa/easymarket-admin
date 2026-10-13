@@ -270,10 +270,14 @@ export interface Customer {
 }
 
 export interface DeliveryAddress {
-  street: string;
-  city: string;
-  state: string;
-  country: string;
+  fullName: string;
+  phoneNumber: string;
+  address: string;
+  landmark?: string;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export interface Agent {
@@ -281,6 +285,24 @@ export interface Agent {
   name: string;
   phoneNumber: string;
   email: string;
+}
+
+export interface OrderPaymentInfo {
+  reference?: string;
+  provider?: string;
+  channel?: string;
+  paidAt?: string;
+  gatewayResponse?: string;
+  failureReason?: string;
+}
+
+export interface OrderRefundInfo {
+  paystackRefundAmount?: string;
+  paystackRefundedAt?: string;
+  paystackRefundReason?: string;
+  paystackRefundReference?: string;
+  logisticsRefundAmount?: string;
+  logisticsRefundedAt?: string;
 }
 
 export interface Order {
@@ -293,14 +315,26 @@ export interface Order {
     | "ready_for_delivery"
     | "out_for_delivery"
     | "delivered"
+    | "cancelled"
+    | "refunded";
+  paymentStatus:
+    | "pending"
+    | "paid"
+    | "failed"
+    | "refunded"
+    | "successful"
     | "cancelled";
-  paymentStatus: "pending" | "paid" | "failed" | "refunded" | "successful";
   customer: Customer;
   deliveryAddress: DeliveryAddress;
   items: OrderItem[];
   subtotal: string;
   deliveryFee: string;
-  tax: number;
+  serviceFee: string;
+  discount: string;
+  promoDiscount: string;
+  referralDiscount: string;
+  promoCode?: string;
+  referralCode?: string;
   total: string;
   assignedAgent?: Agent;
   pickupVendor?: {
@@ -309,6 +343,12 @@ export interface Order {
     address: string;
     phoneNumber: string;
   };
+  deliveryProvider?: string;
+  externalDeliveryId?: string;
+  externalTrackingId?: string;
+  courierInfo?: Record<string, unknown>;
+  payment?: OrderPaymentInfo;
+  refund?: OrderRefundInfo;
   createdAt: string;
   updatedAt: string;
   notes?: string;
@@ -646,6 +686,89 @@ export interface UpdateReferralCodeRequest {
   maxUsage?: number;
 }
 
+// Coupon (Promo) Types
+export type CouponType =
+  | "percentage"
+  | "fixed_amount"
+  | "free_delivery"
+  | "automatic_percentage"
+  | "automatic_fixed";
+
+export type CouponStatus = "active" | "inactive" | "expired" | "depleted";
+
+export interface CouponAssignedUser {
+  id: number;
+  fullName: string;
+  email: string;
+}
+
+export interface Coupon {
+  id: number;
+  code: string;
+  type: CouponType;
+  value: number;
+  minOrderAmount: number;
+  maxUses: number | null;
+  maxUsesPerUser: number | null;
+  assignedUserId: number | null;
+  assignedUser: CouponAssignedUser | null;
+  usesCount: number;
+  startDate: string;
+  endDate: string | null;
+  status: CouponStatus;
+  applicableProducts: number[];
+  applicableCategories: number[];
+  metadata: Record<string, unknown> | null;
+  isFirstOrderOnly: boolean;
+  isForNewUsers: boolean;
+  isValid: boolean;
+  isExpired: boolean;
+  isDepleted: boolean;
+  remainingUses: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CouponFilters {
+  status?: CouponStatus;
+  type?: CouponType;
+  isAutomatic?: boolean;
+  [key: string]: unknown;
+}
+
+export interface CreateCouponRequest {
+  code: string;
+  type: CouponType;
+  value: number;
+  minOrderAmount?: number;
+  maxUses?: number;
+  maxUsesPerUser?: number;
+  assignedUserId?: number | null;
+  startDate?: string;
+  endDate?: string;
+  isFirstOrderOnly?: boolean;
+  isForNewUsers?: boolean;
+}
+
+export interface UpdateCouponRequest extends Partial<CreateCouponRequest> {
+  status?: CouponStatus;
+}
+
+export interface CouponRedemption {
+  orderId: number;
+  orderNumber: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  discountApplied: number;
+  usedAt: string;
+}
+
+export interface TerminateCouponRequest {
+  reason?: string;
+  finalStatus?: CouponStatus;
+}
+
 // Analytics Types
 export interface MetricValue {
   value: number;
@@ -925,4 +1048,103 @@ export interface MessageStatus {
   deliveredAt?: string;
   readAt?: string;
   errorMessage?: string;
+}
+
+// ==================== Campaigns ====================
+
+export type CampaignAudienceType = "all_users" | "specific_users";
+export type CampaignDeliveryType = "now" | "scheduled" | "triggered";
+export type CampaignStatus =
+  | "draft"
+  | "queued"
+  | "sending"
+  | "completed"
+  | "failed"
+  | "cancelled";
+export type CampaignRecipientStatus =
+  | "pending"
+  | "sent"
+  | "delivered"
+  | "failed"
+  | "token_invalid";
+export type CampaignTriggerType = "abandoned_cart" | "inactive_user";
+export type CampaignDelayUnit = "hours" | "days";
+
+export interface Campaign {
+  id: number;
+  title: string;
+  body: string;
+  audienceType: CampaignAudienceType;
+  audienceUserIds: number[] | null;
+  deliveryType: CampaignDeliveryType;
+  scheduledAt: string | null;
+  triggerId: number | null;
+  status: CampaignStatus;
+  totalRecipients: number;
+  totalSent: number;
+  totalDelivered: number;
+  totalFailed: number;
+  failureReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CampaignRecipient {
+  id: number;
+  campaignId: number;
+  userId: number;
+  status: CampaignRecipientStatus;
+  errorMessage: string | null;
+  sentAt: string | null;
+  deliveredAt: string | null;
+  createdAt: string;
+}
+
+export interface CampaignListResponse {
+  campaigns: Campaign[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface CampaignRecipientsResponse {
+  recipients: CampaignRecipient[];
+  total: number;
+}
+
+export interface CampaignFilters {
+  page?: number;
+  limit?: number;
+  status?: CampaignStatus;
+  [key: string]: unknown;
+}
+
+export interface CreateCampaignRequest {
+  title: string;
+  body: string;
+  audienceType: CampaignAudienceType;
+  audienceUserIds?: number[];
+  deliveryType: CampaignDeliveryType;
+  scheduledAt?: string;
+}
+
+export interface CampaignTrigger {
+  id: number;
+  type: CampaignTriggerType;
+  enabled: boolean;
+  delayValue: number;
+  delayUnit: CampaignDelayUnit;
+  titleTemplate: string;
+  bodyTemplate: string;
+  lastRunAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateCampaignTriggerRequest {
+  enabled?: boolean;
+  delayValue?: number;
+  delayUnit?: CampaignDelayUnit;
+  titleTemplate?: string;
+  bodyTemplate?: string;
 }
