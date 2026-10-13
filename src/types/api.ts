@@ -270,10 +270,14 @@ export interface Customer {
 }
 
 export interface DeliveryAddress {
-  street: string;
-  city: string;
-  state: string;
-  country: string;
+  fullName: string;
+  phoneNumber: string;
+  address: string;
+  landmark?: string;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export interface Agent {
@@ -281,6 +285,24 @@ export interface Agent {
   name: string;
   phoneNumber: string;
   email: string;
+}
+
+export interface OrderPaymentInfo {
+  reference?: string;
+  provider?: string;
+  channel?: string;
+  paidAt?: string;
+  gatewayResponse?: string;
+  failureReason?: string;
+}
+
+export interface OrderRefundInfo {
+  paystackRefundAmount?: string;
+  paystackRefundedAt?: string;
+  paystackRefundReason?: string;
+  paystackRefundReference?: string;
+  logisticsRefundAmount?: string;
+  logisticsRefundedAt?: string;
 }
 
 export interface Order {
@@ -293,14 +315,26 @@ export interface Order {
     | "ready_for_delivery"
     | "out_for_delivery"
     | "delivered"
+    | "cancelled"
+    | "refunded";
+  paymentStatus:
+    | "pending"
+    | "paid"
+    | "failed"
+    | "refunded"
+    | "successful"
     | "cancelled";
-  paymentStatus: "pending" | "paid" | "failed" | "refunded" | "successful";
   customer: Customer;
   deliveryAddress: DeliveryAddress;
   items: OrderItem[];
   subtotal: string;
   deliveryFee: string;
-  tax: number;
+  serviceFee: string;
+  discount: string;
+  promoDiscount: string;
+  referralDiscount: string;
+  promoCode?: string;
+  referralCode?: string;
   total: string;
   assignedAgent?: Agent;
   pickupVendor?: {
@@ -309,6 +343,12 @@ export interface Order {
     address: string;
     phoneNumber: string;
   };
+  deliveryProvider?: string;
+  externalDeliveryId?: string;
+  externalTrackingId?: string;
+  courierInfo?: Record<string, unknown>;
+  payment?: OrderPaymentInfo;
+  refund?: OrderRefundInfo;
   createdAt: string;
   updatedAt: string;
   notes?: string;
@@ -644,6 +684,89 @@ export interface UpdateReferralCodeRequest {
   discountType?: ReferralDiscountType;
   discountValue?: number;
   maxUsage?: number;
+}
+
+// Coupon (Promo) Types
+export type CouponType =
+  | "percentage"
+  | "fixed_amount"
+  | "free_delivery"
+  | "automatic_percentage"
+  | "automatic_fixed";
+
+export type CouponStatus = "active" | "inactive" | "expired" | "depleted";
+
+export interface CouponAssignedUser {
+  id: number;
+  fullName: string;
+  email: string;
+}
+
+export interface Coupon {
+  id: number;
+  code: string;
+  type: CouponType;
+  value: number;
+  minOrderAmount: number;
+  maxUses: number | null;
+  maxUsesPerUser: number | null;
+  assignedUserId: number | null;
+  assignedUser: CouponAssignedUser | null;
+  usesCount: number;
+  startDate: string;
+  endDate: string | null;
+  status: CouponStatus;
+  applicableProducts: number[];
+  applicableCategories: number[];
+  metadata: Record<string, unknown> | null;
+  isFirstOrderOnly: boolean;
+  isForNewUsers: boolean;
+  isValid: boolean;
+  isExpired: boolean;
+  isDepleted: boolean;
+  remainingUses: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CouponFilters {
+  status?: CouponStatus;
+  type?: CouponType;
+  isAutomatic?: boolean;
+  [key: string]: unknown;
+}
+
+export interface CreateCouponRequest {
+  code: string;
+  type: CouponType;
+  value: number;
+  minOrderAmount?: number;
+  maxUses?: number;
+  maxUsesPerUser?: number;
+  assignedUserId?: number | null;
+  startDate?: string;
+  endDate?: string;
+  isFirstOrderOnly?: boolean;
+  isForNewUsers?: boolean;
+}
+
+export interface UpdateCouponRequest extends Partial<CreateCouponRequest> {
+  status?: CouponStatus;
+}
+
+export interface CouponRedemption {
+  orderId: number;
+  orderNumber: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  discountApplied: number;
+  usedAt: string;
+}
+
+export interface TerminateCouponRequest {
+  reason?: string;
+  finalStatus?: CouponStatus;
 }
 
 // Analytics Types

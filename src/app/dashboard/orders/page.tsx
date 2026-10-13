@@ -4,6 +4,7 @@
 export const dynamic = "force-dynamic";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +37,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { OrderDetailsModal } from "@/components/order-details-modal";
 import { WhatsAppShareModal } from "@/components/whatsapp-share-modal";
 import { ConfirmOrderVendorDialog } from "@/components/confirm-order-vendor-dialog";
 import {
@@ -90,7 +90,6 @@ const getPaymentStatusColor = (paymentStatus: Order["paymentStatus"]) => {
 };
 
 export default function OrdersPage() {
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [whatsappOrder, setWhatsappOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -514,12 +513,10 @@ export default function OrdersPage() {
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedOrder(order)}
-                              >
-                                <Eye className="h-4 w-4" />
+                              <Button variant="outline" size="sm" asChild>
+                                <Link href={`/dashboard/orders/${order.id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -554,14 +551,6 @@ export default function OrdersPage() {
           )}
         </CardContent>
       </Card>
-
-      {selectedOrder && (
-        <OrderDetailsModal
-          order={selectedOrder}
-          open={!!selectedOrder}
-          onOpenChange={() => setSelectedOrder(null)}
-        />
-      )}
 
       {whatsappOrder && (
         <WhatsAppShareModal
