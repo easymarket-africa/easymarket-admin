@@ -926,3 +926,102 @@ export interface MessageStatus {
   readAt?: string;
   errorMessage?: string;
 }
+
+// ==================== Campaigns ====================
+
+export type CampaignAudienceType = "all_users" | "specific_users";
+export type CampaignDeliveryType = "now" | "scheduled" | "triggered";
+export type CampaignStatus =
+  | "draft"
+  | "queued"
+  | "sending"
+  | "completed"
+  | "failed"
+  | "cancelled";
+export type CampaignRecipientStatus =
+  | "pending"
+  | "sent"
+  | "delivered"
+  | "failed"
+  | "token_invalid";
+export type CampaignTriggerType = "abandoned_cart" | "inactive_user";
+export type CampaignDelayUnit = "hours" | "days";
+
+export interface Campaign {
+  id: number;
+  title: string;
+  body: string;
+  audienceType: CampaignAudienceType;
+  audienceUserIds: number[] | null;
+  deliveryType: CampaignDeliveryType;
+  scheduledAt: string | null;
+  triggerId: number | null;
+  status: CampaignStatus;
+  totalRecipients: number;
+  totalSent: number;
+  totalDelivered: number;
+  totalFailed: number;
+  failureReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CampaignRecipient {
+  id: number;
+  campaignId: number;
+  userId: number;
+  status: CampaignRecipientStatus;
+  errorMessage: string | null;
+  sentAt: string | null;
+  deliveredAt: string | null;
+  createdAt: string;
+}
+
+export interface CampaignListResponse {
+  campaigns: Campaign[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface CampaignRecipientsResponse {
+  recipients: CampaignRecipient[];
+  total: number;
+}
+
+export interface CampaignFilters {
+  page?: number;
+  limit?: number;
+  status?: CampaignStatus;
+  [key: string]: unknown;
+}
+
+export interface CreateCampaignRequest {
+  title: string;
+  body: string;
+  audienceType: CampaignAudienceType;
+  audienceUserIds?: number[];
+  deliveryType: CampaignDeliveryType;
+  scheduledAt?: string;
+}
+
+export interface CampaignTrigger {
+  id: number;
+  type: CampaignTriggerType;
+  enabled: boolean;
+  delayValue: number;
+  delayUnit: CampaignDelayUnit;
+  titleTemplate: string;
+  bodyTemplate: string;
+  lastRunAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateCampaignTriggerRequest {
+  enabled?: boolean;
+  delayValue?: number;
+  delayUnit?: CampaignDelayUnit;
+  titleTemplate?: string;
+  bodyTemplate?: string;
+}
