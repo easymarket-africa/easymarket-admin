@@ -65,6 +65,17 @@ const getStatusColor = (status: Order["status"]) => {
   }
 };
 
+// Transaction outcomes that need someone to act in the provider dashboard
+// (refunds are manual for both providers).
+const NEEDS_MANUAL_ACTION: Record<string, string> = {
+  overpaid: "Customer paid more than the order total. Refund the excess.",
+  partially_paid: "Customer paid less than the order total; no order was fulfilled. Refund what was paid.",
+  reversed: "The provider reversed this payment after it settled. Review the order before fulfilling.",
+};
+
+const providerLabel = (provider?: string) =>
+  provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : "Payment";
+
 const getPaymentStatusColor = (status: Order["paymentStatus"]) => {
   switch (status) {
     case "pending":
@@ -438,6 +449,25 @@ export default function OrderDetailPage() {
                     </p>
                   </div>
                   <div>
+                    <p className="font-medium">Provider Reference</p>
+                    <p className="text-muted-foreground break-all">
+                      {order.payment.providerReference || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Transaction Status</p>
+                    <p className="text-muted-foreground">
+                      {order.payment.status || "—"}
+                    </p>
+                  </div>
+                  {order.payment.status &&
+                    NEEDS_MANUAL_ACTION[order.payment.status] && (
+                      <div className="col-span-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+                        {NEEDS_MANUAL_ACTION[order.payment.status]} Do this in
+                        the {order.payment.provider || "provider"} dashboard.
+                      </div>
+                    )}
+                  <div>
                     <p className="font-medium">Channel</p>
                     <p className="text-muted-foreground">
                       {order.payment.channel || "—"}
@@ -482,19 +512,33 @@ export default function OrderDetailPage() {
             <CardContent>
               {hasRefund ? (
                 <div className="space-y-4">
-                  {order.refund?.paystackRefundAmount && (
+                  {(order.refund?.amount || order.refund?.paystackRefundAmount) && (
                     <div className="space-y-1 text-sm">
-                      <p className="font-medium">Paystack Refund (customer-facing)</p>
+                      <p className="font-medium">
+                        {providerLabel(order.refund.provider || order.payment?.provider)}{" "}
+                        Refund (customer-facing)
+                      </p>
                       <div className="grid grid-cols-2 gap-2 text-muted-foreground">
-                        <span>Amount: {money(order.refund.paystackRefundAmount)}</span>
+                        <span>
+                          Amount:{" "}
+                          {money(order.refund.amount ?? order.refund.paystackRefundAmount)}
+                        </span>
                         <span>
                           Refunded At:{" "}
-                          {order.refund.paystackRefundedAt
-                            ? formatDateTime(order.refund.paystackRefundedAt)
+                          {(order.refund.refundedAt ?? order.refund.paystackRefundedAt)
+                            ? formatDateTime(
+                                (order.refund.refundedAt ?? order.refund.paystackRefundedAt)!
+                              )
                             : "—"}
                         </span>
-                        <span>Reference: {order.refund.paystackRefundReference || "—"}</span>
-                        <span>Reason: {order.refund.paystackRefundReason || "—"}</span>
+                        <span>
+                          Reference:{" "}
+                          {order.refund.reference ?? order.refund.paystackRefundReference ?? "—"}
+                        </span>
+                        <span>
+                          Reason:{" "}
+                          {order.refund.reason ?? order.refund.paystackRefundReason ?? "—"}
+                        </span>
                       </div>
                     </div>
                   )}

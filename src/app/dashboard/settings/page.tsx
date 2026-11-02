@@ -39,6 +39,7 @@ import {
   Wifi,
 } from "lucide-react";
 import { AdminNotifications } from "@/components/admin-notifications";
+import { PaymentProviderSettings } from "@/components/payment-provider-settings";
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState({
@@ -60,11 +61,12 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="general" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="websocket">WebSocket</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
@@ -288,6 +290,10 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="payments" className="space-y-4">
+          <PaymentProviderSettings />
         </TabsContent>
 
         <TabsContent value="integrations" className="space-y-4">
