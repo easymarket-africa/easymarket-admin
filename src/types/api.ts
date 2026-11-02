@@ -287,9 +287,16 @@ export interface Agent {
   email: string;
 }
 
+export type PaymentProviderName = "paystack" | "monnify";
+
 export interface OrderPaymentInfo {
   reference?: string;
   provider?: string;
+  // Provider's own reference (Monnify: MNFY|...).
+  providerReference?: string;
+  // overpaid / partially_paid / reversed need manual action in the provider dashboard.
+  status?: string;
+  amountPaid?: number;
   channel?: string;
   paidAt?: string;
   gatewayResponse?: string;
@@ -297,6 +304,12 @@ export interface OrderPaymentInfo {
 }
 
 export interface OrderRefundInfo {
+  provider?: string;
+  amount?: string;
+  refundedAt?: string;
+  reason?: string;
+  reference?: string;
+  /** @deprecated use the provider-neutral fields above */
   paystackRefundAmount?: string;
   paystackRefundedAt?: string;
   paystackRefundReason?: string;
@@ -1147,4 +1160,39 @@ export interface UpdateCampaignTriggerRequest {
   delayUnit?: CampaignDelayUnit;
   titleTemplate?: string;
   bodyTemplate?: string;
+}
+
+// Payment provider switching (Settings → Payments)
+export interface PaymentProviderOption {
+  name: PaymentProviderName;
+  selectable: boolean;
+  configured: boolean;
+  environment?: "sandbox" | "live";
+}
+
+export interface PaymentProviderHistoryEntry {
+  id: number;
+  createdAt: string;
+  activeProvider: PaymentProviderName;
+  previousProvider: PaymentProviderName | null;
+  reason: string | null;
+  confirmedVia: "email_code" | "seed";
+  changedBy: { id: number; name: string; email: string } | null;
+}
+
+export interface PaymentProviderState {
+  activeProvider: PaymentProviderName;
+  source: "override" | "pilot" | "setting" | "default";
+  selectedProvider: PaymentProviderName | null;
+  override: PaymentProviderName | null;
+  providers: PaymentProviderOption[];
+  pilotUserCount: number;
+  approverEmails: string[];
+  history: PaymentProviderHistoryEntry[];
+}
+
+export interface PaymentProviderChangeRequest {
+  requestId: string;
+  expiresAt: string;
+  sentTo: string[];
 }

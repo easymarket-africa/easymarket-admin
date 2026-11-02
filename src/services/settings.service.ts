@@ -7,6 +7,9 @@ import {
   BillingSettings,
   BackupSettings,
   SystemLog,
+  PaymentProviderName,
+  PaymentProviderState,
+  PaymentProviderChangeRequest,
 } from "@/types/api";
 
 /**
@@ -53,6 +56,33 @@ export class SettingsService {
     data: Partial<SecuritySettings>
   ): Promise<SecuritySettings> {
     return apiClient.put<SecuritySettings>(`${this.basePath}/security`, data);
+  }
+
+  // Payment provider (switching needs a code emailed to the approvers)
+  async getPaymentProvider(): Promise<PaymentProviderState> {
+    return apiClient.get<PaymentProviderState>(
+      `${this.basePath}/payment-provider`
+    );
+  }
+
+  async requestPaymentProviderChange(data: {
+    provider: PaymentProviderName;
+    reason?: string;
+  }): Promise<PaymentProviderChangeRequest> {
+    return apiClient.post<PaymentProviderChangeRequest>(
+      `${this.basePath}/payment-provider/change-requests`,
+      data
+    );
+  }
+
+  async confirmPaymentProviderChange(
+    requestId: string,
+    code: string
+  ): Promise<PaymentProviderState> {
+    return apiClient.post<PaymentProviderState>(
+      `${this.basePath}/payment-provider/change-requests/${requestId}/confirm`,
+      { code }
+    );
   }
 
   // Integration Settings
