@@ -123,6 +123,8 @@ export const queryKeys = {
     security: () => [...queryKeys.settings.all, "security"] as const,
     integrations: () => [...queryKeys.settings.all, "integrations"] as const,
     billing: () => [...queryKeys.settings.all, "billing"] as const,
+    paymentProvider: () =>
+      [...queryKeys.settings.all, "payment-provider"] as const,
   },
 
   // Campaigns

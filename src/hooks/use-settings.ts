@@ -9,6 +9,8 @@ import {
   SecuritySettings,
   IntegrationSettings,
   BillingSettings,
+  PaymentProviderName,
+  PaymentProviderState,
 } from "@/types/api";
 import { toast } from "sonner";
 
@@ -196,6 +198,44 @@ export function useToggleMaintenanceMode() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to toggle maintenance mode");
+    },
+  });
+}
+
+// Payment Provider Hooks
+export function usePaymentProviderSettings() {
+  return useQuery({
+    queryKey: queryKeys.settings.paymentProvider(),
+    queryFn: () => settingsService.getPaymentProvider(),
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useRequestPaymentProviderChange() {
+  return useMutation({
+    mutationFn: (data: { provider: PaymentProviderName; reason?: string }) =>
+      settingsService.requestPaymentProviderChange(data),
+    onSuccess: () => {
+      toast.success("Confirmation code sent to the approvers");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to request provider change");
+    },
+  });
+}
+
+export function useConfirmPaymentProviderChange() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ requestId, code }: { requestId: string; code: string }) =>
+      settingsService.confirmPaymentProviderChange(requestId, code),
+    onSuccess: (state: PaymentProviderState) => {
+      queryClient.setQueryData(queryKeys.settings.paymentProvider(), state);
+      toast.success(`Payment provider switched to ${state.activeProvider}`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to confirm provider change");
     },
   });
 }
